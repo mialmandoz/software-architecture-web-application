@@ -29,13 +29,3 @@ DataGenerator.generate_dataset(
 )
 
 IO.puts("🎉 Database seeding complete!")
-IO.puts("")
-IO.puts("📊 You can now:")
-IO.puts("   • View all CRUD operations at http://localhost:4000")
-IO.puts("   • Check author statistics at http://localhost:4000/authors/statistics")
-IO.puts("   • Test sorting and filtering functionality")
-IO.puts("")
-IO.puts("💡 To generate different amounts of data:")
-IO.puts("   • Small dataset: WebApplication.DataGenerator.generate_small()")
-IO.puts("   • Large dataset: WebApplication.DataGenerator.generate_large()")
-IO.puts("   • Custom: WebApplication.DataGenerator.generate_dataset(authors: 25, books: 100)")

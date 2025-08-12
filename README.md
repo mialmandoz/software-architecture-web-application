@@ -58,7 +58,7 @@ sudo apt install -y nodejs
 ```bash
 # Clonar el repositorio
 git clone https://github.com/mialmandoz/software-architecture-web-application
-cd web_application
+cd software-architecture-web-application
 
 # Instalar herramientas de Phoenix
 mix local.hex --force
@@ -83,7 +83,7 @@ mix ecto.create
 mix ecto.migrate
 mix run priv/repo/seeds.exs
 
-# Resetear la base de datos
+# Resetear y poblar la base de datos
 mix ecto.reset
 ```
 
