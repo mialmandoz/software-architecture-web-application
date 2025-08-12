@@ -1,0 +1,159 @@
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">📊 Author Statistics</h1>
+  <p class="mt-2 text-base-content/70">
+    Authors with published books, average scores, and total sales
+  </p>
+</div>
+
+<!-- Filter Form -->
+<div class="mb-6">
+  <.form
+    :let={f}
+    for={%{}}
+    action={~p"/authors/statistics"}
+    method="get"
+    class="flex items-center gap-4"
+  >
+    <div class="flex-1">
+      <.input
+        field={f[:filter_name]}
+        type="text"
+        placeholder="Filter by author name..."
+        value={@filter_name}
+        name="filter_name"
+        class="w-full text-lg px-4 py-3"
+      />
+    </div>
+    <!-- Hidden fields to preserve sorting -->
+    <input type="hidden" name="sort_by" value={@sort_by} />
+    <input type="hidden" name="sort_order" value={@sort_order} />
+    <.button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-lg">
+      🔍 Filter
+    </.button>
+    <%= if @filter_name != "" do %>
+      <.link href={~p"/authors/statistics"} class="text-sm text-gray-500 hover:text-gray-700">
+        Clear Filter
+      </.link>
+    <% end %>
+  </.form>
+</div>
+
+<!-- Statistics Table -->
+<div class="overflow-x-auto">
+  <table class="min-w-full bg-base-100 border border-base-300 rounded-lg">
+    <thead class="bg-base-200">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          <% {params, _} = sort_link("name", @sort_by, @sort_order, @filter_name) %>
+          <.link href={~p"/authors/statistics?#{params}"} class="hover:text-blue-600">
+            Author Name {sort_arrow("name", @sort_by, @sort_order)}
+          </.link>
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          <% {params, _} = sort_link("book_count", @sort_by, @sort_order, @filter_name) %>
+          <.link href={~p"/authors/statistics?#{params}"} class="hover:text-blue-600">
+            Published Books {sort_arrow("book_count", @sort_by, @sort_order)}
+          </.link>
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          <% {params, _} = sort_link("avg_score", @sort_by, @sort_order, @filter_name) %>
+          <.link href={~p"/authors/statistics?#{params}"} class="hover:text-blue-600">
+            Average Score {sort_arrow("avg_score", @sort_by, @sort_order)}
+          </.link>
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          <% {params, _} = sort_link("total_sales", @sort_by, @sort_order, @filter_name) %>
+          <.link href={~p"/authors/statistics?#{params}"} class="hover:text-blue-600">
+            Total Sales {sort_arrow("total_sales", @sort_by, @sort_order)}
+          </.link>
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          <% {params, _} = sort_link("country", @sort_by, @sort_order, @filter_name) %>
+          <.link href={~p"/authors/statistics?#{params}"} class="hover:text-blue-600">
+            Country {sort_arrow("country", @sort_by, @sort_order)}
+          </.link>
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-base-100 divide-y divide-base-300">
+      <%= for stat <- @author_stats do %>
+        <tr class="hover:bg-base-50 transition-colors duration-200">
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <div>
+                <div class="text-sm font-medium text-base-content">
+                  <.link navigate={~p"/authors/#{stat.author.id}"} class="hover:text-blue-600">
+                    {stat.author.name}
+                  </.link>
+                </div>
+                <%= if stat.author.date_of_birth do %>
+                  <div class="text-sm text-base-content/60">
+                    Born: {Calendar.strftime(stat.author.date_of_birth, "%Y")}
+                  </div>
+                <% end %>
+              </div>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-base-content">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                📚 {stat.book_count}
+              </span>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-base-content">
+              <%= if stat.avg_score > 0 do %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  ⭐ {format_number(stat.avg_score)}/5
+                </span>
+              <% else %>
+                <span class="text-gray-400">No reviews</span>
+              <% end %>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm text-base-content">
+              <%= if stat.total_sales > 0 do %>
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  💰 {format_number(stat.total_sales)}
+                </span>
+              <% else %>
+                <span class="text-gray-400">No sales data</span>
+              <% end %>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content/60">
+            {stat.author.country_of_origin || "Unknown"}
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Empty State -->
+<%= if Enum.empty?(@author_stats) do %>
+  <div class="text-center py-12">
+    <div class="text-6xl mb-4">📚</div>
+    <h3 class="text-lg font-medium text-base-content mb-2">No authors found</h3>
+    <p class="text-base-content/60">
+      <%= if @filter_name != "" do %>
+        No authors match your search criteria. Try adjusting your filter.
+      <% else %>
+        There are no authors in the system yet.
+      <% end %>
+    </p>
+  </div>
+<% end %>
+
+<!-- Centered Action Buttons -->
+<div class="flex justify-center gap-4 mt-8">
+  <.link navigate={~p"/authors"}>
+    <.button class="bg-green-600 hover:bg-green-700">👨‍💼 View All Authors</.button>
+  </.link>
+  <.link navigate={~p"/"}>
+    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
+  </.link>
+</div>

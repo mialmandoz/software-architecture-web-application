@@ -6,12 +6,12 @@
 
 <.table id="authors" rows={@authors} row_click={&JS.navigate(~p"/authors/#{&1}")}>
   <:col :let={author} label="Name">{author.name}</:col>
+  <:col :let={author} label="Country">{author.country_of_origin}</:col>
   <:col :let={author} label="Date of Birth">
     {if author.date_of_birth,
       do: Calendar.strftime(author.date_of_birth, "%B %d, %Y"),
       else: "Not set"}
   </:col>
-  <:col :let={author} label="Country">{author.country_of_origin}</:col>
   <:col :let={author} label="Description">
     <%= if String.length(author.short_description) > 100 do %>
       {String.slice(author.short_description, 0, 100)}...
@@ -36,6 +36,9 @@
 <div class="flex justify-center gap-4 mt-8">
   <.link href={~p"/authors/new"}>
     <.button class="bg-green-600 hover:bg-green-700">✍️ New Author</.button>
+  </.link>
+  <.link href={~p"/authors/statistics"}>
+    <.button class="bg-purple-600 hover:bg-purple-700">📊 Author Statistics</.button>
   </.link>
   <.link navigate={~p"/"}>
     <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>

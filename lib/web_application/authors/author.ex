@@ -8,6 +8,8 @@ defmodule WebApplication.Authors.Author do
     field :country_of_origin, :string
     field :short_description, :string
 
+    has_many :books, WebApplication.Books.Book
+
     timestamps(type: :utc_datetime)
   end
 

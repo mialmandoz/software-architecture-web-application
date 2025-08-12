@@ -11,6 +11,9 @@ defmodule WebApplication.Books.Book do
     field :number_of_sales, :integer, default: 0
     belongs_to :author, Author
 
+    has_many :reviews, WebApplication.Reviews.Review
+    has_many :sales, WebApplication.Sales.Sale
+
     timestamps(type: :utc_datetime)
   end
 

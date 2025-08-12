@@ -9,6 +9,21 @@ defmodule WebApplicationWeb.AuthorController do
     render(conn, :index, authors: authors)
   end
 
+  def statistics(conn, params) do
+    sort_by = Map.get(params, "sort_by", "name")
+    sort_order = Map.get(params, "sort_order", "asc")
+    filter_name = Map.get(params, "filter_name", "")
+
+    author_stats = Authors.get_author_statistics(sort_by, sort_order, filter_name)
+
+    render(conn, :statistics,
+      author_stats: author_stats,
+      sort_by: sort_by,
+      sort_order: sort_order,
+      filter_name: filter_name
+    )
+  end
+
   def show(conn, %{"id" => id}) do
     author = Authors.get_author!(id)
     render(conn, :show, author: author)

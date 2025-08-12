@@ -22,6 +22,78 @@ defmodule WebApplication.Authors do
   end
 
   @doc """
+  Gets author statistics with aggregated data including number of books, average score, and total sales.
+
+  ## Examples
+
+      iex> get_author_statistics("name", "asc", "")
+      [%{author: %Author{}, book_count: 2, avg_score: 4.5, total_sales: 50000000}, ...]
+
+  """
+  def get_author_statistics(sort_by \\ "name", sort_order \\ "asc", filter_name \\ "") do
+    query =
+      from a in Author,
+        left_join: b in assoc(a, :books),
+        left_join: r in assoc(b, :reviews),
+        left_join: s in assoc(b, :sales),
+        group_by: [a.id, a.name, a.date_of_birth, a.country_of_origin, a.short_description],
+        select: %{
+          author: a,
+          book_count: fragment("COUNT(DISTINCT ?)", b.id),
+          avg_score: coalesce(avg(r.score), 0.0),
+          total_sales: coalesce(sum(s.sales), 0)
+        }
+
+    # Apply name filter if provided
+    query =
+      if filter_name != "" do
+        from [a, b, r, s] in query,
+          where: ilike(a.name, ^"%#{filter_name}%")
+      else
+        query
+      end
+
+    # Apply sorting
+    query =
+      case {sort_by, sort_order} do
+        {"name", "asc"} ->
+          from [a, b, r, s] in query, order_by: [asc: a.name]
+
+        {"name", "desc"} ->
+          from [a, b, r, s] in query, order_by: [desc: a.name]
+
+        {"book_count", "asc"} ->
+          from [a, b, r, s] in query, order_by: [asc: fragment("COUNT(DISTINCT ?)", b.id)]
+
+        {"book_count", "desc"} ->
+          from [a, b, r, s] in query, order_by: [desc: fragment("COUNT(DISTINCT ?)", b.id)]
+
+        {"avg_score", "asc"} ->
+          from [a, b, r, s] in query, order_by: [asc: coalesce(avg(r.score), 0.0)]
+
+        {"avg_score", "desc"} ->
+          from [a, b, r, s] in query, order_by: [desc: coalesce(avg(r.score), 0.0)]
+
+        {"total_sales", "asc"} ->
+          from [a, b, r, s] in query, order_by: [asc: coalesce(sum(s.sales), 0)]
+
+        {"total_sales", "desc"} ->
+          from [a, b, r, s] in query, order_by: [desc: coalesce(sum(s.sales), 0)]
+
+        {"country", "asc"} ->
+          from [a, b, r, s] in query, order_by: [asc: a.country_of_origin]
+
+        {"country", "desc"} ->
+          from [a, b, r, s] in query, order_by: [desc: a.country_of_origin]
+
+        _ ->
+          from [a, b, r, s] in query, order_by: [asc: a.name]
+      end
+
+    Repo.all(query)
+  end
+
+  @doc """
   Gets a single author.
 
   Raises `Ecto.NoResultsError` if the Author does not exist.
@@ -38,7 +110,7 @@ defmodule WebApplication.Authors do
   def get_author!(id), do: Repo.get!(Author, id)
 
   @doc """
-  Creates an author.
+  Creates a author.
 
   ## Examples
 
@@ -56,7 +128,7 @@ defmodule WebApplication.Authors do
   end
 
   @doc """
-  Updates an author.
+  Updates a author.
 
   ## Examples
 
@@ -74,7 +146,7 @@ defmodule WebApplication.Authors do
   end
 
   @doc """
-  Deletes an author.
+  Deletes a author.
 
   ## Examples
 
