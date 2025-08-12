@@ -1,16 +1,15 @@
-<.header>
-  Reviews
-  <:actions>
-    <.link href={~p"/reviews/new"}>
-      <.button>New Review</.button>
-    </.link>
-  </:actions>
-</.header>
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">⭐ Reviews</h1>
+  <p class="mt-2 text-base-content/70">Read and write book reviews with star ratings</p>
+</div>
 
 <.table id="reviews" rows={@reviews} row_click={&JS.navigate(~p"/reviews/#{&1}")}>
   <:col :let={review} label="Book">{review.book.name}</:col>
-  <:col :let={review} label="Score">
-    <span class="text-yellow-500">{star_rating(review.score)}</span> ({review.score}/5)
+  <:col :let={review} label="Rating">
+    <span class="text-yellow-500">
+      {star_rating(review.score)}
+    </span>
   </:col>
   <:col :let={review} label="Review">
     <%= if String.length(review.review) > 100 do %>
@@ -34,3 +33,13 @@
     </.link>
   </:action>
 </.table>
+
+<!-- Centered Action Buttons -->
+<div class="flex justify-center gap-4 mt-8">
+  <.link href={~p"/reviews/new"}>
+    <.button class="bg-yellow-600 hover:bg-yellow-700">⭐ New Review</.button>
+  </.link>
+  <.link navigate={~p"/"}>
+    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
+  </.link>
+</div>

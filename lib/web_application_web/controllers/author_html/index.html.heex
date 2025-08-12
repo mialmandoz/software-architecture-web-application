@@ -1,11 +1,8 @@
-<.header>
-  Authors
-  <:actions>
-    <.link href={~p"/authors/new"}>
-      <.button>New Author</.button>
-    </.link>
-  </:actions>
-</.header>
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">👨‍💼 Authors</h1>
+  <p class="mt-2 text-base-content/70">Discover and manage author profiles</p>
+</div>
 
 <.table id="authors" rows={@authors} row_click={&JS.navigate(~p"/authors/#{&1}")}>
   <:col :let={author} label="Name">{author.name}</:col>
@@ -16,8 +13,8 @@
   </:col>
   <:col :let={author} label="Country">{author.country_of_origin}</:col>
   <:col :let={author} label="Description">
-    <%= if author.short_description && String.length(author.short_description) > 80 do %>
-      {String.slice(author.short_description, 0, 80)}...
+    <%= if String.length(author.short_description) > 100 do %>
+      {String.slice(author.short_description, 0, 100)}...
     <% else %>
       {author.short_description}
     <% end %>
@@ -34,3 +31,13 @@
     </.link>
   </:action>
 </.table>
+
+<!-- Centered Action Buttons -->
+<div class="flex justify-center gap-4 mt-8">
+  <.link href={~p"/authors/new"}>
+    <.button class="bg-green-600 hover:bg-green-700">✍️ New Author</.button>
+  </.link>
+  <.link navigate={~p"/"}>
+    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
+  </.link>
+</div>

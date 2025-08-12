@@ -1,11 +1,8 @@
-<.header>
-  Books
-  <:actions>
-    <.link href={~p"/books/new"}>
-      <.button>New Book</.button>
-    </.link>
-  </:actions>
-</.header>
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">📚 Books</h1>
+  <p class="mt-2 text-base-content/70">Manage your book collection</p>
+</div>
 
 <.table id="books" rows={@books} row_click={&JS.navigate(~p"/books/#{&1}")}>
   <:col :let={book} label="Name">{book.name}</:col>
@@ -37,3 +34,13 @@
     </.link>
   </:action>
 </.table>
+
+<!-- Centered Action Buttons -->
+<div class="flex justify-center gap-4 mt-8">
+  <.link href={~p"/books/new"}>
+    <.button class="bg-blue-600 hover:bg-blue-700">📖 New Book</.button>
+  </.link>
+  <.link navigate={~p"/"}>
+    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
+  </.link>
+</div>
