@@ -5,9 +5,11 @@ defmodule WebApplicationWeb.BookController do
   alias WebApplication.Books.Book
   alias WebApplication.Authors
 
-  def index(conn, _params) do
-    books = Books.list_books()
-    render(conn, :index, books: books)
+  def index(conn, params) do
+    books = Books.list_books(params)
+    filter_name = Map.get(params, "filter_name", "")
+    filter_author = Map.get(params, "filter_author", "")
+    render(conn, :index, books: books, filter_name: filter_name, filter_author: filter_author)
   end
 
   def show(conn, %{"id" => id}) do

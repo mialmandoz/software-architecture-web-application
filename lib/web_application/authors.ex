@@ -9,16 +9,45 @@ defmodule WebApplication.Authors do
   alias WebApplication.Authors.Author
 
   @doc """
-  Returns the list of authors.
+  Returns the list of authors with optional filtering.
 
   ## Examples
 
       iex> list_authors()
       [%Author{}, ...]
 
+      iex> list_authors(%{"filter_name" => "smith"})
+      [%Author{}, ...]
+
   """
-  def list_authors do
-    Repo.all(Author)
+  def list_authors(params \\ %{}) do
+    filter_name = Map.get(params, "filter_name", "")
+    filter_country = Map.get(params, "filter_country", "")
+
+    query = from(a in Author)
+
+    # Apply name filter
+    query =
+      if filter_name != "" do
+        from a in query,
+          where: ilike(a.name, ^"%#{filter_name}%")
+      else
+        query
+      end
+
+    # Apply country filter
+    query =
+      if filter_country != "" do
+        from a in query,
+          where: ilike(a.country_of_origin, ^"%#{filter_country}%")
+      else
+        query
+      end
+
+    # Order by name for consistent display
+    query = from a in query, order_by: [asc: a.name]
+
+    Repo.all(query)
   end
 
   @doc """

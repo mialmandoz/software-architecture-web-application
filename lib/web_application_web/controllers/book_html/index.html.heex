@@ -1,7 +1,47 @@
 <!-- Centered Title -->
 <div class="text-center mb-8">
   <h1 class="text-4xl font-bold text-base-content">📚 Books</h1>
-  <p class="mt-2 text-base-content/70">Manage your book collection</p>
+  <p class="mt-2 text-base-content/70">Explore our collection of literary works</p>
+</div>
+
+<!-- Filter Form -->
+<div class="mb-6">
+  <.form
+    :let={f}
+    for={%{}}
+    action={~p"/books"}
+    method="get"
+    class="flex flex-col sm:flex-row items-center gap-4"
+  >
+    <div class="flex-1">
+      <.input
+        field={f[:filter_name]}
+        type="text"
+        placeholder="Filter by book title..."
+        value={@filter_name}
+        name="filter_name"
+        class="w-full text-lg px-4 py-3"
+      />
+    </div>
+    <div class="flex-1">
+      <.input
+        field={f[:filter_author]}
+        type="text"
+        placeholder="Filter by author name..."
+        value={@filter_author}
+        name="filter_author"
+        class="w-full text-lg px-4 py-3"
+      />
+    </div>
+    <.button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-lg">
+      🔍 Filter
+    </.button>
+    <%= if @filter_name != "" or @filter_author != "" do %>
+      <.link href={~p"/books"} class="text-sm text-gray-500 hover:text-gray-700">
+        Clear Filters
+      </.link>
+    <% end %>
+  </.form>
 </div>
 
 <.table id="books" rows={@books} row_click={&JS.navigate(~p"/books/#{&1}")}>
@@ -34,6 +74,21 @@
     </.link>
   </:action>
 </.table>
+
+<!-- Empty State -->
+<%= if Enum.empty?(@books) do %>
+  <div class="text-center py-12">
+    <div class="text-6xl mb-4">📖</div>
+    <h3 class="text-lg font-medium text-base-content mb-2">No books found</h3>
+    <p class="text-base-content/60">
+      <%= if @filter_name != "" or @filter_author != "" do %>
+        No books match your search criteria. Try adjusting your filters.
+      <% else %>
+        There are no books in the system yet.
+      <% end %>
+    </p>
+  </div>
+<% end %>
 
 <!-- Centered Action Buttons -->
 <div class="flex justify-center gap-4 mt-8">

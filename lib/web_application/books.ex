@@ -9,17 +9,48 @@ defmodule WebApplication.Books do
   alias WebApplication.Books.Book
 
   @doc """
-  Returns the list of books.
+  Returns the list of books with optional filtering.
 
   ## Examples
 
       iex> list_books()
       [%Book{}, ...]
 
+      iex> list_books(%{"filter_name" => "gatsby"})
+      [%Book{}, ...]
+
   """
-  def list_books do
-    Repo.all(Book)
-    |> Repo.preload(:author)
+  def list_books(params \\ %{}) do
+    filter_name = Map.get(params, "filter_name", "")
+    filter_author = Map.get(params, "filter_author", "")
+
+    query =
+      from b in Book,
+        join: a in assoc(b, :author),
+        preload: [author: a]
+
+    # Apply book name filter
+    query =
+      if filter_name != "" do
+        from [b, a] in query,
+          where: ilike(b.name, ^"%#{filter_name}%")
+      else
+        query
+      end
+
+    # Apply author name filter
+    query =
+      if filter_author != "" do
+        from [b, a] in query,
+          where: ilike(a.name, ^"%#{filter_author}%")
+      else
+        query
+      end
+
+    # Order by book name for consistent display
+    query = from [b, a] in query, order_by: [asc: b.name]
+
+    Repo.all(query)
   end
 
   @doc """
