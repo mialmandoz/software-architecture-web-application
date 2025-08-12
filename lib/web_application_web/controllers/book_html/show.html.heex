@@ -1,0 +1,29 @@
+<.header>
+  Book: {@book.name}
+  <:subtitle>Book details</:subtitle>
+  <:actions>
+    <.link href={~p"/books/#{@book}/edit"}>
+      <.button>Edit book</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@book.name}</:item>
+  <:item title="Summary">{@book.summary}</:item>
+  <:item title="Date of publication">
+    {if @book.date_of_publication,
+      do: Calendar.strftime(@book.date_of_publication, "%B %d, %Y"),
+      else: "Not set"}
+  </:item>
+  <:item title="Number of sales">{@book.number_of_sales}</:item>
+</.list>
+
+<div class="mt-4">
+  <.link
+    navigate={~p"/books"}
+    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+  >
+    ← Back to books
+  </.link>
+</div>
