@@ -12,6 +12,11 @@ defmodule WebApplicationWeb.BookController do
     render(conn, :index, books: books, filter_name: filter_name, filter_author: filter_author)
   end
 
+  def top_rated(conn, _params) do
+    top_books = Books.get_top_rated_books()
+    render(conn, :top_rated, top_books: top_books)
+  end
+
   def show(conn, %{"id" => id}) do
     book = Books.get_book!(id)
     render(conn, :show, book: book)

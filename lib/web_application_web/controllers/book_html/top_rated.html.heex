@@ -1,0 +1,128 @@
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">🏆 Top Rated Books</h1>
+  <p class="mt-2 text-base-content/70">
+    The 10 highest-rated books with their best and worst reviews
+  </p>
+</div>
+
+<!-- Action Button -->
+<div class="flex justify-center mb-6">
+  <.link navigate={~p"/books"}>
+    <.button class="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg">📚 View All Books</.button>
+  </.link>
+</div>
+
+<!-- Top Books Table -->
+<div class="overflow-x-auto">
+  <table class="min-w-full bg-base-100 border border-base-300 rounded-lg">
+    <thead class="bg-base-200">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Rank
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Book
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Author
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Avg Score
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Best Review
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-base-content uppercase tracking-wider border-b border-base-300">
+          Worst Review
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-base-100 divide-y divide-base-300">
+      <%= for {book_data, index} <- Enum.with_index(@top_books, 1) do %>
+        <tr
+          class="hover:bg-base-200 cursor-pointer"
+          phx-click={JS.navigate(~p"/books/#{book_data.book}")}
+        >
+          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-base-content">
+            <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-yellow-100 text-yellow-800 font-bold">
+              {index}
+            </span>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="text-sm font-medium text-base-content">{book_data.book.name}</div>
+            <div class="text-sm text-base-content/60">
+              <%= if String.length(book_data.book.summary) > 80 do %>
+                {String.slice(book_data.book.summary, 0, 80)}...
+              <% else %>
+                {book_data.book.summary}
+              <% end %>
+            </div>
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-base-content">
+            {book_data.author.name}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap">
+            <div class="flex items-center">
+              <span class="text-yellow-500 text-lg mr-2">⭐</span>
+              <span class="text-sm font-medium text-base-content">
+                {book_data.avg_score |> Decimal.round(1) |> Decimal.to_string()}
+              </span>
+            </div>
+          </td>
+          <td class="px-6 py-4 text-sm text-base-content max-w-xs">
+            <%= if book_data.best_review do %>
+              <div class="mb-1">
+                <span class="text-yellow-500">
+                  {String.duplicate("⭐", book_data.best_review.score)}
+                </span>
+                <span class="text-xs text-base-content/60 ml-2">
+                  👍 {book_data.best_review.number_of_upvotes}
+                </span>
+              </div>
+              <div class="text-xs text-base-content/80">
+                <%= if String.length(book_data.best_review.review) > 60 do %>
+                  "{String.slice(book_data.best_review.review, 0, 60)}..."
+                <% else %>
+                  "{book_data.best_review.review}"
+                <% end %>
+              </div>
+            <% else %>
+              <span class="text-base-content/40">No reviews</span>
+            <% end %>
+          </td>
+          <td class="px-6 py-4 text-sm text-base-content max-w-xs">
+            <%= if book_data.worst_review do %>
+              <div class="mb-1">
+                <span class="text-yellow-500">
+                  {String.duplicate("⭐", book_data.worst_review.score)}
+                </span>
+                <span class="text-xs text-base-content/60 ml-2">
+                  👍 {book_data.worst_review.number_of_upvotes}
+                </span>
+              </div>
+              <div class="text-xs text-base-content/80">
+                <%= if String.length(book_data.worst_review.review) > 60 do %>
+                  "{String.slice(book_data.worst_review.review, 0, 60)}..."
+                <% else %>
+                  "{book_data.worst_review.review}"
+                <% end %>
+              </div>
+            <% else %>
+              <span class="text-base-content/40">No reviews</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Empty State -->
+<%= if Enum.empty?(@top_books) do %>
+  <div class="text-center py-12">
+    <div class="text-6xl mb-4">🏆</div>
+    <h3 class="text-lg font-medium text-base-content mb-2">No rated books found</h3>
+    <p class="text-base-content/60">There are no books with reviews in the system yet.</p>
+  </div>
+<% end %>
