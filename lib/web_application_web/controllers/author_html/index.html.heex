@@ -1,0 +1,36 @@
+<.header>
+  Authors
+  <:actions>
+    <.link href={~p"/authors/new"}>
+      <.button>New Author</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="authors" rows={@authors} row_click={&JS.navigate(~p"/authors/#{&1}")}>
+  <:col :let={author} label="Name">{author.name}</:col>
+  <:col :let={author} label="Date of Birth">
+    {if author.date_of_birth,
+      do: Calendar.strftime(author.date_of_birth, "%B %d, %Y"),
+      else: "Not set"}
+  </:col>
+  <:col :let={author} label="Country">{author.country_of_origin}</:col>
+  <:col :let={author} label="Description">
+    <%= if author.short_description && String.length(author.short_description) > 80 do %>
+      {String.slice(author.short_description, 0, 80)}...
+    <% else %>
+      {author.short_description}
+    <% end %>
+  </:col>
+  <:action :let={author}>
+    <div class="sr-only">
+      <.link navigate={~p"/authors/#{author}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/authors/#{author}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={author}>
+    <.link href={~p"/authors/#{author}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

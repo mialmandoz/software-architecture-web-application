@@ -1,0 +1,14 @@
+<.form :let={f} for={@changeset} action={@action}>
+  <div :if={@changeset.action} class="alert alert-danger">
+    <p>Oops, something went wrong! Please check the errors below.</p>
+  </div>
+
+  <.input field={f[:name]} type="text" label="Name" />
+  <.input field={f[:date_of_birth]} type="date" label="Date of Birth" />
+  <.input field={f[:country_of_origin]} type="text" label="Country of Origin" />
+  <.input field={f[:short_description]} type="textarea" label="Short Description" />
+
+  <div>
+    <.button type="submit">Save Author</.button>
+  </div>
+</.form>

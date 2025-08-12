@@ -19,6 +19,7 @@ defmodule WebApplicationWeb.Router do
 
     get "/", PageController, :home
     resources "/books", BookController
+    resources "/authors", AuthorController
   end
 
   # Other scopes may use custom stacks.

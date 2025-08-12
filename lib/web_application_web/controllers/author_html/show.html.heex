@@ -1,0 +1,29 @@
+<.header>
+  Author: {@author.name}
+  <:subtitle>Author details</:subtitle>
+  <:actions>
+    <.link href={~p"/authors/#{@author}/edit"}>
+      <.button>Edit author</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Name">{@author.name}</:item>
+  <:item title="Date of Birth">
+    {if @author.date_of_birth,
+      do: Calendar.strftime(@author.date_of_birth, "%B %d, %Y"),
+      else: "Not set"}
+  </:item>
+  <:item title="Country of Origin">{@author.country_of_origin}</:item>
+  <:item title="Short Description">{@author.short_description}</:item>
+</.list>
+
+<div class="mt-4">
+  <.link
+    navigate={~p"/authors"}
+    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+  >
+    ← Back to authors
+  </.link>
+</div>
