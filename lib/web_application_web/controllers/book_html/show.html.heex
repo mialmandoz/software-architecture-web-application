@@ -10,6 +10,9 @@
 
 <.list>
   <:item title="Name">{@book.name}</:item>
+  <:item title="Author">
+    {if @book.author, do: @book.author.name, else: "Unknown"}
+  </:item>
   <:item title="Summary">{@book.summary}</:item>
   <:item title="Date of publication">
     {if @book.date_of_publication,

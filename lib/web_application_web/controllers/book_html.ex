@@ -8,6 +8,7 @@ defmodule WebApplicationWeb.BookHTML do
   """
   attr :changeset, Ecto.Changeset, required: true
   attr :action, :string, required: true
+  attr :authors, :list, required: true
 
   def book_form(assigns)
 end

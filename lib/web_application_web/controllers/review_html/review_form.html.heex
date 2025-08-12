@@ -1,0 +1,34 @@
+<.form :let={f} for={@changeset} action={@action}>
+  <div :if={@changeset.action} class="alert alert-danger">
+    <p>Oops, something went wrong! Please check the errors below.</p>
+  </div>
+
+  <.input
+    field={f[:book_id]}
+    type="select"
+    label="Book"
+    options={Enum.map(@books, &{&1.name, &1.id})}
+    prompt="Choose a book"
+  />
+
+  <.input
+    field={f[:score]}
+    type="select"
+    label="Score (1-5 stars)"
+    options={[
+      {"⭐ 1 Star", 1},
+      {"⭐⭐ 2 Stars", 2},
+      {"⭐⭐⭐ 3 Stars", 3},
+      {"⭐⭐⭐⭐ 4 Stars", 4},
+      {"⭐⭐⭐⭐⭐ 5 Stars", 5}
+    ]}
+    prompt="Choose a rating"
+  />
+
+  <.input field={f[:review]} type="textarea" label="Review" />
+  <.input field={f[:number_of_upvotes]} type="number" label="Number of Upvotes" />
+
+  <div>
+    <.button type="submit">Save Review</.button>
+  </div>
+</.form>

@@ -9,6 +9,9 @@
 
 <.table id="books" rows={@books} row_click={&JS.navigate(~p"/books/#{&1}")}>
   <:col :let={book} label="Name">{book.name}</:col>
+  <:col :let={book} label="Author">
+    {if book.author, do: book.author.name, else: "Unknown"}
+  </:col>
   <:col :let={book} label="Publication Date">
     {if book.date_of_publication,
       do: Calendar.strftime(book.date_of_publication, "%B %d, %Y"),

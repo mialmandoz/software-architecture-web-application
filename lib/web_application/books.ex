@@ -19,6 +19,7 @@ defmodule WebApplication.Books do
   """
   def list_books do
     Repo.all(Book)
+    |> Repo.preload(:author)
   end
 
   @doc """
@@ -35,7 +36,10 @@ defmodule WebApplication.Books do
       ** (Ecto.NoResultsError)
 
   """
-  def get_book!(id), do: Repo.get!(Book, id)
+  def get_book!(id) do
+    Repo.get!(Book, id)
+    |> Repo.preload(:author)
+  end
 
   @doc """
   Creates a book.

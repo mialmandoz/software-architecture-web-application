@@ -3,6 +3,7 @@ defmodule WebApplicationWeb.BookController do
 
   alias WebApplication.Books
   alias WebApplication.Books.Book
+  alias WebApplication.Authors
 
   def index(conn, _params) do
     books = Books.list_books()
@@ -16,7 +17,8 @@ defmodule WebApplicationWeb.BookController do
 
   def new(conn, _params) do
     changeset = Books.change_book(%Book{})
-    render(conn, :new, changeset: changeset)
+    authors = Authors.list_authors()
+    render(conn, :new, changeset: changeset, authors: authors)
   end
 
   def create(conn, %{"book" => book_params}) do
@@ -27,14 +29,16 @@ defmodule WebApplicationWeb.BookController do
         |> redirect(to: ~p"/books/#{book}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :new, changeset: changeset)
+        authors = Authors.list_authors()
+        render(conn, :new, changeset: changeset, authors: authors)
     end
   end
 
   def edit(conn, %{"id" => id}) do
     book = Books.get_book!(id)
     changeset = Books.change_book(book)
-    render(conn, :edit, book: book, changeset: changeset)
+    authors = Authors.list_authors()
+    render(conn, :edit, book: book, changeset: changeset, authors: authors)
   end
 
   def update(conn, %{"id" => id, "book" => book_params}) do
@@ -47,7 +51,8 @@ defmodule WebApplicationWeb.BookController do
         |> redirect(to: ~p"/books/#{book}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        render(conn, :edit, book: book, changeset: changeset)
+        authors = Authors.list_authors()
+        render(conn, :edit, book: book, changeset: changeset, authors: authors)
     end
   end
 

@@ -1,0 +1,36 @@
+<.header>
+  Reviews
+  <:actions>
+    <.link href={~p"/reviews/new"}>
+      <.button>New Review</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.table id="reviews" rows={@reviews} row_click={&JS.navigate(~p"/reviews/#{&1}")}>
+  <:col :let={review} label="Book">{review.book.name}</:col>
+  <:col :let={review} label="Score">
+    <span class="text-yellow-500">{star_rating(review.score)}</span> ({review.score}/5)
+  </:col>
+  <:col :let={review} label="Review">
+    <%= if String.length(review.review) > 100 do %>
+      {String.slice(review.review, 0, 100)}...
+    <% else %>
+      {review.review}
+    <% end %>
+  </:col>
+  <:col :let={review} label="Upvotes">
+    👍 {review.number_of_upvotes}
+  </:col>
+  <:action :let={review}>
+    <div class="sr-only">
+      <.link navigate={~p"/reviews/#{review}"}>Show</.link>
+    </div>
+    <.link navigate={~p"/reviews/#{review}/edit"}>Edit</.link>
+  </:action>
+  <:action :let={review}>
+    <.link href={~p"/reviews/#{review}"} method="delete" data-confirm="Are you sure?">
+      Delete
+    </.link>
+  </:action>
+</.table>

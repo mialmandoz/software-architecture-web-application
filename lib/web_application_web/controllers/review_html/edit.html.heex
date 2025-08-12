@@ -1,0 +1,15 @@
+<.header>
+  Edit Review
+  <:subtitle>Use this form to update the book review.</:subtitle>
+</.header>
+
+<.review_form changeset={@changeset} action={~p"/reviews/#{@review}"} books={@books} />
+
+<div class="mt-4">
+  <.link
+    navigate={~p"/reviews"}
+    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+  >
+    ← Back to reviews
+  </.link>
+</div>

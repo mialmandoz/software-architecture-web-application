@@ -1,0 +1,28 @@
+<.header>
+  Review for: {@review.book.name}
+  <:subtitle>Review details</:subtitle>
+  <:actions>
+    <.link href={~p"/reviews/#{@review}/edit"}>
+      <.button>Edit review</.button>
+    </.link>
+  </:actions>
+</.header>
+
+<.list>
+  <:item title="Book">{@review.book.name}</:item>
+  <:item title="Score">
+    <span class="text-yellow-500 text-lg">{star_rating(@review.score)}</span>
+    ({@review.score} out of 5 stars)
+  </:item>
+  <:item title="Review">{@review.review}</:item>
+  <:item title="Upvotes">👍 {@review.number_of_upvotes}</:item>
+</.list>
+
+<div class="mt-4">
+  <.link
+    navigate={~p"/reviews"}
+    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+  >
+    ← Back to reviews
+  </.link>
+</div>
