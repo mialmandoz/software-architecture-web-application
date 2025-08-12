@@ -4,6 +4,18 @@
   <p class="mt-2 text-base-content/70">Discover and manage author profiles</p>
 </div>
 
+<!-- Action Buttons -->
+<div class="flex justify-center gap-4 mb-6">
+  <.link href={~p"/authors/new"}>
+    <.button class="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg">✍️ New Author</.button>
+  </.link>
+  <.link href={~p"/authors/statistics"}>
+    <.button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 text-lg">
+      📊 Author Statistics
+    </.button>
+  </.link>
+</div>
+
 <!-- Filter Form -->
 <div class="mb-6">
   <.form
@@ -86,16 +98,3 @@
     </p>
   </div>
 <% end %>
-
-<!-- Centered Action Buttons -->
-<div class="flex justify-center gap-4 mt-8">
-  <.link href={~p"/authors/new"}>
-    <.button class="bg-green-600 hover:bg-green-700">✍️ New Author</.button>
-  </.link>
-  <.link href={~p"/authors/statistics"}>
-    <.button class="bg-purple-600 hover:bg-purple-700">📊 Author Statistics</.button>
-  </.link>
-  <.link navigate={~p"/"}>
-    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
-  </.link>
-</div>

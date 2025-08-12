@@ -1,7 +1,16 @@
 <!-- Centered Title -->
 <div class="text-center mb-8">
-  <h1 class="text-4xl font-bold text-base-content">📊 Sales by Year</h1>
+  <h1 class="text-4xl font-bold text-base-content">💰 Sales by Year</h1>
   <p class="mt-2 text-base-content/70">Track book sales data and performance by year</p>
+</div>
+
+<!-- Action Button -->
+<div class="flex justify-center mb-6">
+  <.link href={~p"/sales/new"}>
+    <.button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 text-lg">
+      💰 New Sale Record
+    </.button>
+  </.link>
 </div>
 
 <.table id="sales" rows={@sales} row_click={&JS.navigate(~p"/sales/#{&1}")}>
@@ -25,13 +34,3 @@
     </.link>
   </:action>
 </.table>
-
-<!-- Centered Action Buttons -->
-<div class="flex justify-center gap-4 mt-8">
-  <.link href={~p"/sales/new"}>
-    <.button class="bg-purple-600 hover:bg-purple-700">📊 New Sale Record</.button>
-  </.link>
-  <.link navigate={~p"/"}>
-    <.button class="bg-gray-500 hover:bg-gray-600">🏠 Main Menu</.button>
-  </.link>
-</div>
