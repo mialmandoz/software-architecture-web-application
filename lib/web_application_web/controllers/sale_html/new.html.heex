@@ -1,0 +1,15 @@
+<.header>
+  New Sale Record
+  <:subtitle>Use this form to create a new sales record by year.</:subtitle>
+</.header>
+
+<.sale_form changeset={@changeset} action={~p"/sales"} books={@books} />
+
+<div class="mt-4">
+  <.link
+    navigate={~p"/sales"}
+    class="text-sm font-semibold leading-6 text-zinc-900 hover:text-zinc-700"
+  >
+    ← Back to sales
+  </.link>
+</div>

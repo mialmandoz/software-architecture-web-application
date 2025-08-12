@@ -13,6 +13,7 @@
 alias WebApplication.Books
 alias WebApplication.Authors
 alias WebApplication.Reviews
+alias WebApplication.Sales
 
 # Create sample authors
 {:ok, fitzgerald} =
@@ -131,4 +132,77 @@ Reviews.create_review(%{
     "While beautifully written, I found the characters somewhat unlikeable and the pacing slow at times. Still, it's an important work that captures the essence of its era.",
   score: 3,
   number_of_upvotes: 45
+})
+
+# Create sample sales data
+Sales.create_sale(%{
+  book_id: gatsby.id,
+  year: 2020,
+  sales: 1_500_000
+})
+
+Sales.create_sale(%{
+  book_id: gatsby.id,
+  year: 2021,
+  sales: 1_750_000
+})
+
+Sales.create_sale(%{
+  book_id: gatsby.id,
+  year: 2022,
+  sales: 1_600_000
+})
+
+Sales.create_sale(%{
+  book_id: mockingbird.id,
+  year: 2020,
+  sales: 2_200_000
+})
+
+Sales.create_sale(%{
+  book_id: mockingbird.id,
+  year: 2021,
+  sales: 2_400_000
+})
+
+Sales.create_sale(%{
+  book_id: mockingbird.id,
+  year: 2022,
+  sales: 2_100_000
+})
+
+Sales.create_sale(%{
+  book_id: nineteen_eighty_four.id,
+  year: 2020,
+  sales: 1_800_000
+})
+
+Sales.create_sale(%{
+  book_id: nineteen_eighty_four.id,
+  year: 2021,
+  sales: 2_000_000
+})
+
+Sales.create_sale(%{
+  book_id: nineteen_eighty_four.id,
+  year: 2022,
+  sales: 1_900_000
+})
+
+Sales.create_sale(%{
+  book_id: pride_prejudice.id,
+  year: 2020,
+  sales: 1_200_000
+})
+
+Sales.create_sale(%{
+  book_id: pride_prejudice.id,
+  year: 2021,
+  sales: 1_350_000
+})
+
+Sales.create_sale(%{
+  book_id: pride_prejudice.id,
+  year: 2022,
+  sales: 1_400_000
 })

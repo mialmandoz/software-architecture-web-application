@@ -78,9 +78,13 @@ mix assets.setup
 docker-compose up -d
 docker ps  # Verificar que está corriendo
 
-# Crear y migrar la base de datos
+# Crear, migrar y poblar la base de datos
 mix ecto.create
 mix ecto.migrate
+mix run priv/repo/seeds.exs
+
+# Resetear la base de datos
+mix ecto.reset
 ```
 
 ---
