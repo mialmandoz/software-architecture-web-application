@@ -22,4 +22,21 @@ defmodule WebApplicationWeb.SaleHTML do
   end
 
   def format_sales(_), do: "0"
+
+  @doc """
+  Generates the sort path for the book column, toggling between asc and desc.
+  """
+  def book_sort_path(params) do
+    current_sort = params["sort_by"]
+    current_order = params["sort_order"] || "asc"
+
+    new_order =
+      case {current_sort, current_order} do
+        {"book_name", "asc"} -> "desc"
+        {"book_name", "desc"} -> "asc"
+        _ -> "asc"
+      end
+
+    ~p"/sales?sort_by=book_name&sort_order=#{new_order}"
+  end
 end

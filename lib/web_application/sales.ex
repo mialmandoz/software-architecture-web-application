@@ -9,18 +9,43 @@ defmodule WebApplication.Sales do
   alias WebApplication.Sales.Sale
 
   @doc """
-  Returns the list of sales.
+  Returns the list of sales with optional sorting.
 
   ## Examples
 
       iex> list_sales()
       [%Sale{}, ...]
 
+      iex> list_sales(%{sort_by: "book_name", sort_order: "asc"})
+      [%Sale{}, ...]
+
   """
-  def list_sales do
-    Repo.all(Sale)
-    |> Repo.preload(book: :author)
+  def list_sales(params \\ %{}) do
+    query =
+      from(s in Sale,
+        join: b in assoc(s, :book),
+        left_join: a in assoc(b, :author),
+        preload: [book: {b, author: a}]
+      )
+
+    query = apply_sorting(query, params)
+
+    Repo.all(query)
   end
+
+  defp apply_sorting(query, %{"sort_by" => "book_name", "sort_order" => "desc"}) do
+    from([s, b, a] in query, order_by: [desc: b.name])
+  end
+
+  defp apply_sorting(query, %{"sort_by" => "book_name", "sort_order" => "asc"}) do
+    from([s, b, a] in query, order_by: [asc: b.name])
+  end
+
+  defp apply_sorting(query, %{"sort_by" => "book_name"}) do
+    from([s, b, a] in query, order_by: [asc: b.name])
+  end
+
+  defp apply_sorting(query, _params), do: query
 
   @doc """
   Gets a single sale.

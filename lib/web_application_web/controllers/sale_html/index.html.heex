@@ -14,12 +14,55 @@
 </div>
 
 <.table id="sales" rows={@sales} row_click={&JS.navigate(~p"/sales/#{&1}")}>
-  <:col :let={sale} label="Book">{sale.book.name}</:col>
-  <:col :let={sale} label="Year">{sale.year}</:col>
-  <:col :let={sale} label="Sales">
+  <:col
+    :let={sale}
+    label={
+      raw(
+        ~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
+      Book
+      #{if @params["sort_by"] == "book_name" do
+          if @params["sort_order"] == "desc" do
+            ~s(<span class="ml-1">↓</span>)
+          else
+            ~s(<span class="ml-1">↑</span>)
+          end
+        else
+          ~s(<span class="ml-1 text-gray-400">↕</span>)
+        end}
+    </a>)
+      )
+    }
+  >
+    {sale.book.name}
+  </:col>
+  <:col
+    :let={sale}
+    label={
+      raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
+      Year
+    </a>))
+    }
+  >
+    {sale.year}
+  </:col>
+  <:col
+    :let={sale}
+    label={
+      raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
+      Sales
+    </a>))
+    }
+  >
     📊 {format_sales(sale.sales)}
   </:col>
-  <:col :let={sale} label="Author">
+  <:col
+    :let={sale}
+    label={
+      raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
+      Author
+    </a>))
+    }
+  >
     {if sale.book.author, do: sale.book.author.name, else: "Unknown"}
   </:col>
   <:action :let={sale}>

@@ -34,7 +34,8 @@ defmodule WebApplication.DataGenerator do
     author_list = generate_authors(authors)
     book_list = generate_books(books, author_list)
     generate_reviews(book_list, reviews_per_book)
-    generate_sales(book_list, sales_years)
+    sales_data = generate_sales(book_list, sales_years)
+    update_books_sales_totals(book_list, sales_data)
 
     IO.puts("✅ Dataset generation complete!")
   end
@@ -880,10 +881,10 @@ defmodule WebApplication.DataGenerator do
       genre = Enum.random(genres)
 
       attrs = %{
-        name: "#{title} #{if i > 20, do: "- Book #{i}", else: ""}",
+        name: title,
         summary: generate_book_summary(genre),
         date_of_publication: random_date(1950, 2024),
-        number_of_sales: Enum.random(500..100_000),
+        number_of_sales: 0,
         author_id: author.id
       }
 
@@ -947,25 +948,43 @@ defmodule WebApplication.DataGenerator do
 
     IO.puts("💰 Creating #{total_sales} sales records...")
 
-    count = 0
+    # Create all book-year combinations
+    book_year_pairs = for book <- books, year <- years, do: {book, year}
 
-    for book <- books, year <- years do
-      # More realistic sales distribution - newer books tend to sell more
-      base_sales = Enum.random(100..5000)
-      year_multiplier = if year >= current_year - 2, do: Enum.random(2..5), else: 1
+    {_count, sales_data} =
+      Enum.reduce(book_year_pairs, {0, %{}}, fn {book, year}, {count, acc_sales_data} ->
+        # More realistic sales distribution - newer books tend to sell more
+        base_sales = Enum.random(100..5000)
+        year_multiplier = if year >= current_year - 2, do: Enum.random(2..5), else: 1
+        sales_amount = base_sales * year_multiplier
 
-      attrs = %{
-        sales: base_sales * year_multiplier,
-        year: year,
-        book_id: book.id
-      }
+        attrs = %{
+          sales: sales_amount,
+          year: year,
+          book_id: book.id
+        }
 
-      {:ok, _sale} = Sales.create_sale(attrs)
-      count = count + 1
-      if rem(count, 100) == 0, do: IO.write(".")
-    end
+        {:ok, _sale} = Sales.create_sale(attrs)
+
+        # Track sales totals per book
+        current_total = Map.get(acc_sales_data, book.id, 0)
+        updated_sales_data = Map.put(acc_sales_data, book.id, current_total + sales_amount)
+
+        new_count = count + 1
+        if rem(new_count, 100) == 0, do: IO.write(".")
+
+        {new_count, updated_sales_data}
+      end)
 
     IO.puts(" ✓")
+    sales_data
+  end
+
+  defp update_books_sales_totals(books, sales_data) do
+    for book <- books do
+      total_sales = Map.get(sales_data, book.id, 0)
+      {:ok, _updated_book} = Books.update_book(book, %{number_of_sales: total_sales})
+    end
   end
 
   # Helper functions for realistic content generation
