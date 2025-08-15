@@ -9,20 +9,21 @@ defmodule WebApplication.Authors do
   alias WebApplication.Authors.Author
 
   @doc """
-  Returns the list of authors with optional filtering.
+  Returns a paginated list of authors with optional filtering.
 
   ## Examples
 
       iex> list_authors()
-      [%Author{}, ...]
+      %Scrivener.Page{entries: [%Author{}, ...], ...}
 
-      iex> list_authors(%{"filter_name" => "smith"})
-      [%Author{}, ...]
+      iex> list_authors(%{"filter_name" => "smith", "page" => "2"})
+      %Scrivener.Page{entries: [%Author{}, ...], ...}
 
   """
   def list_authors(params \\ %{}) do
     filter_name = Map.get(params, "filter_name", "")
     filter_country = Map.get(params, "filter_country", "")
+    page = Map.get(params, "page", "1") |> String.to_integer()
 
     query = from(a in Author)
 
@@ -47,7 +48,7 @@ defmodule WebApplication.Authors do
     # Order by name for consistent display
     query = from a in query, order_by: [asc: a.name]
 
-    Repo.all(query)
+    Repo.paginate(query, page: page, page_size: 10)
   end
 
   @doc """

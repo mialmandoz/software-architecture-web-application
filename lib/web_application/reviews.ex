@@ -9,19 +9,21 @@ defmodule WebApplication.Reviews do
   alias WebApplication.Reviews.Review
 
   @doc """
-  Returns the list of reviews, optionally filtered by book name.
+  Returns a paginated list of reviews, optionally filtered by book name.
 
   ## Examples
 
       iex> list_reviews()
-      [%Review{}, ...]
+      %Scrivener.Page{entries: [%Review{}, ...], ...}
 
-      iex> list_reviews(%{"filter_book" => "Harry Potter"})
-      [%Review{}, ...]
+      iex> list_reviews(%{"filter_book" => "Harry Potter", "page" => "2"})
+      %Scrivener.Page{entries: [%Review{}, ...], ...}
 
   """
   def list_reviews(params \\ %{}) do
-    query = from(r in Review, join: b in assoc(r, :book))
+    page = Map.get(params, "page", "1") |> String.to_integer()
+
+    query = from(r in Review, join: b in assoc(r, :book), preload: :book)
 
     query =
       case Map.get(params, "filter_book") do
@@ -35,9 +37,10 @@ defmodule WebApplication.Reviews do
           from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
       end
 
-    query
-    |> Repo.all()
-    |> Repo.preload(:book)
+    # Order by review ID for consistent pagination
+    query = from [r, b] in query, order_by: [desc: r.id]
+
+    Repo.paginate(query, page: page, page_size: 10)
   end
 
   @doc """

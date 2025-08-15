@@ -10,10 +10,14 @@
     <.button class="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg">✍️ New Book</.button>
   </.link>
   <.link href={~p"/books/top-rated"}>
-    <.button class="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 text-lg">🏆 Top 10 Rated Books</.button>
+    <.button class="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 text-lg">
+      🏆 Top 10 Rated Books
+    </.button>
   </.link>
   <.link href={~p"/books/top-selling"}>
-    <.button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 text-lg">📈 Top 50 Selling Books</.button>
+    <.button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 text-lg">
+      📈 Top 50 Selling Books
+    </.button>
   </.link>
 </div>
 
@@ -46,10 +50,20 @@
         class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
       />
     </div>
+    <div class="flex-1">
+      <.input
+        field={f[:filter_summary]}
+        type="text"
+        placeholder="Search book summaries..."
+        value={@filter_summary}
+        name="filter_summary"
+        class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+      />
+    </div>
     <.button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-lg">
       🔍 Filter
     </.button>
-    <%= if @filter_name != "" or @filter_author != "" do %>
+    <%= if @filter_name != "" or @filter_author != "" or @filter_summary != "" do %>
       <.link href={~p"/books"} class="text-sm text-gray-500 hover:text-gray-700">
         Clear Filters
       </.link>
@@ -88,13 +102,28 @@
   </:action>
 </.table>
 
+<!-- Pagination -->
+<%= if @page.total_pages > 1 do %>
+  <.pagination
+    page={@page}
+    path={~p"/books"}
+    params={
+      %{
+        "filter_name" => @filter_name,
+        "filter_author" => @filter_author,
+        "filter_summary" => @filter_summary
+      }
+    }
+  />
+<% end %>
+
 <!-- Empty State -->
 <%= if Enum.empty?(@books) do %>
   <div class="text-center py-12">
     <div class="text-6xl mb-4">📖</div>
     <h3 class="text-lg font-medium text-base-content mb-2">No books found</h3>
     <p class="text-base-content/60">
-      <%= if @filter_name != "" or @filter_author != "" do %>
+      <%= if @filter_name != "" or @filter_author != "" or @filter_summary != "" do %>
         No books match your search criteria. Try adjusting your filters.
       <% else %>
         There are no books in the system yet.

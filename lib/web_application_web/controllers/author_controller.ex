@@ -5,12 +5,13 @@ defmodule WebApplicationWeb.AuthorController do
   alias WebApplication.Authors.Author
 
   def index(conn, params) do
-    authors = Authors.list_authors(params)
+    page = Authors.list_authors(params)
     filter_name = Map.get(params, "filter_name", "")
     filter_country = Map.get(params, "filter_country", "")
 
     render(conn, :index,
-      authors: authors,
+      page: page,
+      authors: page.entries,
       filter_name: filter_name,
       filter_country: filter_country
     )

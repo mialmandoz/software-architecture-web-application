@@ -6,11 +6,12 @@ defmodule WebApplicationWeb.ReviewController do
   alias WebApplication.Books
 
   def index(conn, params) do
-    reviews = Reviews.list_reviews(params)
+    page = Reviews.list_reviews(params)
     filter_book = Map.get(params, "filter_book", "")
 
     render(conn, :index,
-      reviews: reviews,
+      page: page,
+      reviews: page.entries,
       filter_book: filter_book
     )
   end

@@ -6,8 +6,8 @@ defmodule WebApplicationWeb.SaleController do
   alias WebApplication.Books
 
   def index(conn, params) do
-    sales = Sales.list_sales(params)
-    render(conn, :index, sales: sales, params: params)
+    page = Sales.list_sales(params)
+    render(conn, :index, page: page, sales: page.entries, params: params)
   end
 
   def show(conn, %{"id" => id}) do

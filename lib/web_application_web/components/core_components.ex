@@ -419,6 +419,141 @@ defmodule WebApplicationWeb.CoreComponents do
     """
   end
 
+  @doc """
+  Renders pagination controls for Scrivener pages.
+
+  ## Examples
+
+      <.pagination page={@page} path={~p"/books"} />
+      <.pagination page={@page} path={~p"/books"} params={%{"filter_name" => @filter_name}} />
+  """
+  attr :page, :map, required: true, doc: "the Scrivener page struct"
+  attr :path, :string, required: true, doc: "the base path for pagination links"
+  attr :params, :map, default: %{}, doc: "additional query parameters to preserve"
+
+  def pagination(assigns) do
+    ~H"""
+    <div class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+      <div class="flex flex-1 justify-between sm:hidden">
+        <%= if @page.page_number > 1 do %>
+          <.link
+            href={build_pagination_url(@path, @params, @page.page_number - 1)}
+            class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Previous
+          </.link>
+        <% else %>
+          <span class="relative inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+            Previous
+          </span>
+        <% end %>
+        <%= if @page.page_number < @page.total_pages do %>
+          <.link
+            href={build_pagination_url(@path, @params, @page.page_number + 1)}
+            class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            Next
+          </.link>
+        <% else %>
+          <span class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-400 cursor-not-allowed">
+            Next
+          </span>
+        <% end %>
+      </div>
+      <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+        <div>
+          <p class="text-sm text-gray-700">
+            Showing <span class="font-medium">{(@page.page_number - 1) * @page.page_size + 1}</span>
+            to
+            <span class="font-medium">
+              {min(@page.page_number * @page.page_size, @page.total_entries)}
+            </span>
+            of <span class="font-medium">{@page.total_entries}</span>
+            results
+          </p>
+        </div>
+        <div>
+          <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+            <%= if @page.page_number > 1 do %>
+              <.link
+                href={build_pagination_url(@path, @params, @page.page_number - 1)}
+                class="relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              >
+                <span class="sr-only">Previous</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path
+                    fill-rule="evenodd"
+                    d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </.link>
+            <% end %>
+
+            <%= for page_num <- pagination_range(@page) do %>
+              <%= if page_num == @page.page_number do %>
+                <span class="relative z-10 inline-flex items-center bg-blue-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600">
+                  {page_num}
+                </span>
+              <% else %>
+                <.link
+                  href={build_pagination_url(@path, @params, page_num)}
+                  class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+                >
+                  {page_num}
+                </.link>
+              <% end %>
+            <% end %>
+
+            <%= if @page.page_number < @page.total_pages do %>
+              <.link
+                href={build_pagination_url(@path, @params, @page.page_number + 1)}
+                class="relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0"
+              >
+                <span class="sr-only">Next</span>
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path
+                    fill-rule="evenodd"
+                    d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </.link>
+            <% end %>
+          </nav>
+        </div>
+      </div>
+    </div>
+    """
+  end
+
+  # Helper function to build pagination URLs with preserved parameters
+  defp build_pagination_url(path, params, page_number) do
+    query_params = Map.put(params, "page", page_number)
+    query_string = URI.encode_query(query_params)
+    "#{path}?#{query_string}"
+  end
+
+  # Helper function to generate pagination range
+  defp pagination_range(page) do
+    total_pages = page.total_pages
+    current_page = page.page_number
+
+    cond do
+      total_pages <= 7 ->
+        1..total_pages
+
+      current_page <= 4 ->
+        1..7
+
+      current_page >= total_pages - 3 ->
+        (total_pages - 6)..total_pages
+
+      true ->
+        (current_page - 3)..(current_page + 3)
+    end
+  end
+
   ## JS Commands
 
   def show(js \\ %JS{}, selector) do

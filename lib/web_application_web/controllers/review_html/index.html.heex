@@ -71,6 +71,15 @@
   </:action>
 </.table>
 
+<!-- Pagination -->
+<%= if @page.total_pages > 1 do %>
+  <.pagination
+    page={@page}
+    path={~p"/reviews"}
+    params={%{"filter_book" => @filter_book}}
+  />
+<% end %>
+
 <!-- Empty State -->
 <%= if Enum.empty?(@reviews) do %>
   <div class="text-center py-12">

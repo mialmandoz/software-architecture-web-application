@@ -10,20 +10,22 @@ defmodule WebApplication.Books do
   alias WebApplication.Reviews.Review
 
   @doc """
-  Returns the list of books with optional filtering.
+  Returns a paginated list of books with optional filtering.
 
   ## Examples
 
       iex> list_books()
-      [%Book{}, ...]
+      %Scrivener.Page{entries: [%Book{}, ...], ...}
 
-      iex> list_books(%{"filter_name" => "gatsby"})
-      [%Book{}, ...]
+      iex> list_books(%{"filter_name" => "gatsby", "page" => "2"})
+      %Scrivener.Page{entries: [%Book{}, ...], ...}
 
   """
   def list_books(params \\ %{}) do
     filter_name = Map.get(params, "filter_name", "")
     filter_author = Map.get(params, "filter_author", "")
+    filter_summary = Map.get(params, "filter_summary", "")
+    page = Map.get(params, "page", "1") |> String.to_integer()
 
     query =
       from b in Book,
@@ -48,10 +50,19 @@ defmodule WebApplication.Books do
         query
       end
 
+    # Apply summary filter
+    query =
+      if filter_summary != "" do
+        from [b, a] in query,
+          where: ilike(b.summary, ^"%#{filter_summary}%")
+      else
+        query
+      end
+
     # Order by book name for consistent display
     query = from [b, a] in query, order_by: [asc: b.name]
 
-    Repo.all(query)
+    Repo.paginate(query, page: page, page_size: 10)
   end
 
   @doc """

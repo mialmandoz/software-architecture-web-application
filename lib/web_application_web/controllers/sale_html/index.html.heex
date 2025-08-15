@@ -77,3 +77,21 @@
     </.link>
   </:action>
 </.table>
+
+<!-- Pagination -->
+<%= if @page.total_pages > 1 do %>
+  <.pagination
+    page={@page}
+    path={~p"/sales"}
+    params={@params}
+  />
+<% end %>
+
+<!-- Empty State -->
+<%= if Enum.empty?(@sales) do %>
+  <div class="text-center py-12">
+    <div class="text-6xl mb-4">💰</div>
+    <h3 class="text-lg font-medium text-base-content mb-2">No sales found</h3>
+    <p class="text-base-content/60">There are no sales records in the system yet.</p>
+  </div>
+<% end %>

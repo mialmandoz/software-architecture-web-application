@@ -84,6 +84,15 @@
   </:action>
 </.table>
 
+<!-- Pagination -->
+<%= if @page.total_pages > 1 do %>
+  <.pagination
+    page={@page}
+    path={~p"/authors"}
+    params={%{"filter_name" => @filter_name, "filter_country" => @filter_country}}
+  />
+<% end %>
+
 <!-- Empty State -->
 <%= if Enum.empty?(@authors) do %>
   <div class="text-center py-12">

@@ -6,10 +6,18 @@ defmodule WebApplicationWeb.BookController do
   alias WebApplication.Authors
 
   def index(conn, params) do
-    books = Books.list_books(params)
+    page = Books.list_books(params)
     filter_name = Map.get(params, "filter_name", "")
     filter_author = Map.get(params, "filter_author", "")
-    render(conn, :index, books: books, filter_name: filter_name, filter_author: filter_author)
+    filter_summary = Map.get(params, "filter_summary", "")
+
+    render(conn, :index,
+      page: page,
+      books: page.entries,
+      filter_name: filter_name,
+      filter_author: filter_author,
+      filter_summary: filter_summary
+    )
   end
 
   def top_rated(conn, _params) do

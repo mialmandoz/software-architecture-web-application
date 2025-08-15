@@ -9,18 +9,20 @@ defmodule WebApplication.Sales do
   alias WebApplication.Sales.Sale
 
   @doc """
-  Returns the list of sales with optional sorting.
+  Returns a paginated list of sales with optional sorting.
 
   ## Examples
 
       iex> list_sales()
-      [%Sale{}, ...]
+      %Scrivener.Page{entries: [%Sale{}, ...], ...}
 
-      iex> list_sales(%{sort_by: "book_name", sort_order: "asc"})
-      [%Sale{}, ...]
+      iex> list_sales(%{sort_by: "book_name", sort_order: "asc", page: "2"})
+      %Scrivener.Page{entries: [%Sale{}, ...], ...}
 
   """
   def list_sales(params \\ %{}) do
+    page = Map.get(params, "page", "1") |> String.to_integer()
+
     query =
       from(s in Sale,
         join: b in assoc(s, :book),
@@ -30,7 +32,7 @@ defmodule WebApplication.Sales do
 
     query = apply_sorting(query, params)
 
-    Repo.all(query)
+    Repo.paginate(query, page: page, page_size: 10)
   end
 
   defp apply_sorting(query, %{"sort_by" => "book_name", "sort_order" => "desc"}) do
