@@ -7,10 +7,10 @@
 <!-- Action Buttons -->
 <div class="flex justify-center gap-4 mb-6">
   <.link href={~p"/authors/new"}>
-    <.button class="bg-green-600 hover:bg-green-700 px-6 py-3 text-lg">✍️ New Author</.button>
+    <.button class="btn btn-success btn-lg">✍️ New Author</.button>
   </.link>
   <.link href={~p"/authors/statistics"}>
-    <.button class="bg-purple-600 hover:bg-purple-700 px-6 py-3 text-lg">
+    <.button class="btn btn-warning btn-lg">
       📊 Author Statistics
     </.button>
   </.link>
@@ -45,7 +45,7 @@
         class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
       />
     </div>
-    <.button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-lg">
+    <.button type="submit" class="btn btn-primary btn-lg">
       🔍 Filter
     </.button>
     <%= if @filter_name != "" or @filter_country != "" do %>

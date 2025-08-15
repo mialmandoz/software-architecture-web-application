@@ -7,7 +7,7 @@
 <!-- Action Button -->
 <div class="flex justify-center mb-6">
   <.link href={~p"/reviews/new"}>
-    <.button class="bg-yellow-600 hover:bg-yellow-700 px-6 py-3 text-lg">⭐ New Review</.button>
+    <.button class="btn btn-success btn-lg">⭐ New Review</.button>
   </.link>
 </div>
 
@@ -30,7 +30,7 @@
         class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
       />
     </div>
-    <.button type="submit" class="bg-blue-600 hover:bg-blue-700 px-6 py-3 text-lg">
+    <.button type="submit" class="btn btn-primary btn-lg">
       🔍 Filter
     </.button>
     <%= if @filter_book != "" do %>
