@@ -9,16 +9,34 @@ defmodule WebApplication.Reviews do
   alias WebApplication.Reviews.Review
 
   @doc """
-  Returns the list of reviews.
+  Returns the list of reviews, optionally filtered by book name.
 
   ## Examples
 
       iex> list_reviews()
       [%Review{}, ...]
 
+      iex> list_reviews(%{"filter_book" => "Harry Potter"})
+      [%Review{}, ...]
+
   """
-  def list_reviews do
-    Repo.all(Review)
+  def list_reviews(params \\ %{}) do
+    query = from(r in Review, join: b in assoc(r, :book))
+
+    query =
+      case Map.get(params, "filter_book") do
+        nil ->
+          query
+
+        "" ->
+          query
+
+        book_name ->
+          from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
+      end
+
+    query
+    |> Repo.all()
     |> Repo.preload(:book)
   end
 
