@@ -1,187 +1,243 @@
 # WebApplication
 
-Aplicación web desarrollada con **Phoenix Framework** y **PostgreSQL**.
+Web application developed with **Phoenix Framework** and **PostgreSQL**.
 
 ---
 
-## 1. Requisitos
+## 1. Requirements
 
 ### macOS
 
 ```bash
-# Instalar Homebrew (si no lo tienes)
+# Install Homebrew (if you don't have it)
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 
-# Instalar Elixir y Erlang
+# Install Elixir and Erlang
 brew install elixir
 
-# Instalar Docker Desktop
+# Install Docker Desktop
 brew install --cask docker
 
-# (Opcional) Instalar Node.js si se requieren herramientas npm
+# (Optional) Install Node.js if npm tools are required
 brew install node
 ```
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
-# Actualizar el sistema
+# Update the system
 sudo apt update
 
-# Instalar Erlang y Elixir
+# Install Erlang and Elixir
 wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
 sudo dpkg -i erlang-solutions_2.0_all.deb
 sudo apt update
 sudo apt install esl-erlang elixir
 
-# Instalar Docker
+# Install Docker
 sudo apt install docker.io docker-compose
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
 
-# (Opcional) Instalar Node.js
+# (Optional) Install Node.js
 curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
 sudo apt install -y nodejs
 ```
 
 ### Windows
 
-1. **Instalar Erlang y Elixir:** https://elixir-lang.org/install.html#windows
-2. **Instalar Docker Desktop:** https://www.docker.com/products/docker-desktop
-3. **(Opcional) Instalar Node.js:** https://nodejs.org/
-4. **Instalar Git:** https://git-scm.com/
+1. **Install Erlang and Elixir:** https://elixir-lang.org/install.html#windows
+2. **Install Docker Desktop:** https://www.docker.com/products/docker-desktop
+3. **(Optional) Install Node.js:** https://nodejs.org/
+4. **Install Git:** https://git-scm.com/
 
 ---
 
-## 2. Instalación del proyecto
+## 2. Project Installation
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 git clone https://github.com/mialmandoz/software-architecture-web-application
 cd software-architecture-web-application
 
-# Instalar herramientas de Phoenix
+# Install Phoenix tools
 mix local.hex --force
 mix archive.install hex phx_new --force
 
-# Instalar dependencias
+# Install dependencies
 mix deps.get
 mix assets.setup
 ```
 
 ---
 
-## 3. Configuración de la base de datos
+## 3. Database Configuration
 
 ```bash
-# Iniciar PostgreSQL con Docker
+# Start PostgreSQL with Docker
 docker-compose up -d
-docker ps  # Verificar que está corriendo
+docker ps  # Verify it's running
 
-# Crear, migrar y poblar la base de datos
+# Option 1: Use the setup script (recommended for new users)
+chmod +x setup.sh
+./setup.sh
+
+# Option 2: Manual setup
 mix ecto.create
 mix ecto.migrate
 mix run priv/repo/seeds.exs
 
-# Resetear y poblar la base de datos
+# Reset and seed the database
 mix ecto.reset
 ```
 
 ---
 
-## 4. Ejecución de la aplicación
+## 4. Running the Application
 
 ```bash
-# Iniciar servidor
+# Start server
 mix phx.server
-
-# O en modo interactivo
-iex -S mix phx.server
 ```
 
-La aplicación estará disponible en: **http://localhost:4000** (modo desarrollo)
+The application will be available at: **http://localhost:4000** (development mode)
 
 ---
 
-## 5. Comandos útiles
-
-### Entorno y servidor
-```bash
-docker-compose up -d       # Iniciar PostgreSQL
-docker-compose down        # Detener PostgreSQL
-mix phx.server             # Iniciar aplicación
-```
-
-### Desarrollo
-```bash
-mix test                   # Ejecutar tests
-mix format                 # Formatear código
-mix phx.routes             # Listar rutas
-```
-
-### Base de datos
-```bash
-mix ecto.gen.migration nombre_migracion  # Nueva migración
-mix ecto.migrate                         # Ejecutar migraciones
-mix ecto.rollback                        # Revertir última migración
-mix ecto.reset                           # Resetear base
-```
-
-### Docker
-```bash
-docker ps                 # Ver contenedores activos
-docker-compose logs db    # Ver logs de PostgreSQL
-docker-compose restart db # Reiniciar PostgreSQL
-```
-
----
-
-## 6. Solución de problemas
-
-### Error de conexión a base de datos
-```bash
-docker ps
-docker-compose restart db
-docker-compose logs db
-```
-
-### Error de dependencias
-```bash
-mix deps.clean --all
-mix deps.get
-mix deps.compile
-```
-
-### Puerto 4000 ocupado
-```bash
-lsof -ti:4000 | xargs kill -9
-```
-
----
-
-## 7. Estructura del proyecto
+## 5. Project Structure
 
 ```
 web_application/
-├── lib/                    # Código principal de la aplicación
-│   ├── web_application/    # Lógica de negocio
-│   └── web_application_web/ # Controladores, vistas, etc.
-├── assets/                 # CSS, JavaScript, imágenes
-├── config/                 # Configuración
-├── priv/                   # Migraciones y archivos estáticos
-├── test/                   # Pruebas
-├── docker-compose.yml      # Configuración de PostgreSQL
-└── mix.exs                 # Dependencias y configuración
+├── lib/                           # Main application code
+│   ├── web_application/           # Business logic and contexts
+│   │   ├── application.ex         # Application configuration
+│   │   ├── repo.ex               # Ecto repository
+│   │   ├── mailer.ex             # Email configuration
+│   │   ├── data_generator.ex     # Test data generator
+│   │   ├── authors/              # Authors context
+│   │   │   └── author.ex         # Schema and validations
+│   │   ├── authors.ex            # CRUD functions for authors
+│   │   ├── books/                # Books context
+│   │   │   └── book.ex           # Schema and validations
+│   │   ├── books.ex              # CRUD functions for books (with filters)
+│   │   ├── reviews/              # Reviews context
+│   │   │   └── review.ex         # Schema and validations
+│   │   ├── reviews.ex            # CRUD functions for reviews
+│   │   ├── sales/                # Sales context
+│   │   │   └── sale.ex           # Schema and validations
+│   │   └── sales.ex              # CRUD functions for sales
+│   ├── web_application_web/       # Web layer (controllers, views, etc.)
+│   │   ├── components/           # Reusable components
+│   │   │   ├── core_components.ex # Base components (includes pagination)
+│   │   │   ├── layouts.ex        # Application layouts
+│   │   │   └── layouts/          # Layout templates
+│   │   ├── controllers/          # Web controllers
+│   │   │   ├── author_controller.ex    # Authors CRUD
+│   │   │   ├── author_html/            # Authors HTML views
+│   │   │   │   ├── index.html.heex     # List with pagination
+│   │   │   │   ├── show.html.heex      # Author detail
+│   │   │   │   ├── new.html.heex       # Create author
+│   │   │   │   ├── edit.html.heex      # Edit author
+│   │   │   │   └── author_form.html.heex # Form
+│   │   │   ├── author_html.ex          # View helpers
+│   │   │   ├── book_controller.ex      # Books CRUD
+│   │   │   ├── book_html/              # Books HTML views
+│   │   │   │   ├── index.html.heex     # List with filters and pagination
+│   │   │   │   ├── show.html.heex      # Book detail
+│   │   │   │   ├── new.html.heex       # Create book
+│   │   │   │   ├── edit.html.heex      # Edit book
+│   │   │   │   └── book_form.html.heex # Form
+│   │   │   ├── book_html.ex            # View helpers
+│   │   │   ├── review_controller.ex    # Reviews CRUD
+│   │   │   ├── review_html/            # Reviews HTML views
+│   │   │   │   ├── index.html.heex     # List with pagination
+│   │   │   │   ├── show.html.heex      # Review detail
+│   │   │   │   ├── new.html.heex       # Create review
+│   │   │   │   ├── edit.html.heex      # Edit review
+│   │   │   │   └── review_form.html.heex # Form
+│   │   │   ├── review_html.ex          # View helpers
+│   │   │   ├── sale_controller.ex      # Sales CRUD
+│   │   │   ├── sale_html/              # Sales HTML views
+│   │   │   │   ├── index.html.heex     # List with pagination
+│   │   │   │   ├── show.html.heex      # Sale detail
+│   │   │   │   ├── new.html.heex       # Create sale
+│   │   │   │   ├── edit.html.heex      # Edit sale
+│   │   │   │   └── sale_form.html.heex # Form
+│   │   │   ├── sale_html.ex            # View helpers
+│   │   │   ├── page_controller.ex      # Main page
+│   │   │   ├── page_html/              # Main page view
+│   │   │   │   └── home.html.heex      # Home page
+│   │   │   ├── page_html.ex            # Page helpers
+│   │   │   ├── error_html.ex           # HTML error handling
+│   │   │   └── error_json.ex           # JSON error handling
+│   │   ├── endpoint.ex               # Endpoint configuration
+│   │   ├── router.ex                 # Application routes
+│   │   ├── gettext.ex                # Internationalization
+│   │   └── telemetry.ex              # Metrics and monitoring
+│   └── web_application.ex            # Main module
+├── assets/                           # Frontend resources
+│   ├── css/
+│   │   └── app.css                   # Main styles
+│   ├── js/
+│   │   └── app.js                    # Main JavaScript
+│   ├── vendor/                       # External libraries
+│   │   ├── daisyui-theme.js         # DaisyUI themes
+│   │   ├── daisyui.js               # DaisyUI components
+│   │   └── heroicons.js             # Icons
+│   └── tsconfig.json                # TypeScript configuration
+├── config/                          # Application configuration
+│   ├── config.exs                   # General configuration
+│   ├── dev.exs                      # Development configuration
+│   ├── prod.exs                     # Production configuration
+│   ├── runtime.exs                  # Runtime configuration
+│   └── test.exs                     # Test configuration
+├── priv/                            # Private files
+│   ├── gettext/                     # Translation files
+│   │   ├── en/                      # English translations
+│   │   └── errors.pot               # Error template
+│   ├── repo/                        # Database
+│   │   ├── migrations/              # DB migrations
+│   │   │   ├── 20250812184324_create_books.exs
+│   │   │   ├── 20250812185146_create_authors.exs
+│   │   │   ├── 20250812195954_create_reviews.exs
+│   │   │   ├── 20250812200602_add_author_to_books.exs
+│   │   │   └── 20250812201612_create_sales.exs
+│   │   └── seeds.exs                # Initial data
+│   └── static/                      # Static files
+│       ├── images/                  # Images
+│       ├── favicon.ico              # Site icon
+│       └── robots.txt               # Robots configuration
+├── test/                            # Automated tests
+│   ├── support/                     # Test support
+│   │   ├── conn_case.ex            # Connection test cases
+│   │   └── data_case.ex            # Data test cases
+│   ├── web_application_web/         # Web tests
+│   │   └── controllers/             # Controller tests
+│   └── test_helper.exs              # Test configuration
+├── .formatter.exs                   # Formatter configuration
+├── .gitignore                       # Files ignored by Git
+├── AGENTS.md                        # Agents documentation
+├── README.md                        # This file
+├── docker-compose.yml               # PostgreSQL configuration
+├── mix.exs                          # Project dependencies and configuration
+└── mix.lock                         # Exact dependency versions
 ```
+
+### Implemented Features
+
+- **Complete CRUD** for Authors, Books, Reviews and Sales
+- **Pagination** in all index views (10 items per page)
+- **Search filters** in books (by title, author and description)
+- **Entity relationships** (books-authors, reviews-books, etc.)
+- **Validations** in all forms
+- **Modern interface** with DaisyUI and Tailwind CSS
+- **Reusable components** for pagination and forms
 
 ---
 
-## 8. Recursos útiles
+## 6. Useful Resources
 
 - [Phoenix Framework](https://hexdocs.pm/phoenix)
 - [Elixir](https://elixir-lang.org/docs.html)
 - [Ecto ORM](https://hexdocs.pm/ecto)
 - [Docker Compose](https://docs.docker.com/compose/)
-
----
-
