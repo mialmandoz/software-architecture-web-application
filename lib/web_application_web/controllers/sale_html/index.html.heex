@@ -13,6 +13,56 @@
   </.link>
 </div>
 
+<!-- Filter Form -->
+<div class="mb-6 p-4 border border-gray-300 rounded-lg bg-gray-50">
+  <.form
+    :let={f}
+    for={%{}}
+    action={~p"/sales"}
+    method="get"
+    class="flex flex-col sm:flex-row items-center gap-4"
+  >
+    <div class="flex-1">
+      <.input
+        field={f[:filter_book]}
+        type="text"
+        placeholder="Filter by book name..."
+        value={@filter_book}
+        name="filter_book"
+        class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+      />
+    </div>
+    <div class="flex-1">
+      <.input
+        field={f[:filter_author]}
+        type="text"
+        placeholder="Filter by author..."
+        value={@filter_author}
+        name="filter_author"
+        class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+      />
+    </div>
+    <div class="flex-1">
+      <.input
+        field={f[:filter_year]}
+        type="text"
+        placeholder="Filter by year..."
+        value={@filter_year}
+        name="filter_year"
+        class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+      />
+    </div>
+    <.button type="submit" class="btn btn-primary btn-lg">
+      🔍 Filter
+    </.button>
+    <%= if @filter_book != "" or @filter_year != "" or @filter_author != "" do %>
+      <.link href={~p"/sales"} class="text-sm text-gray-500 hover:text-gray-700">
+        Clear Filters
+      </.link>
+    <% end %>
+  </.form>
+</div>
+
 <.table id="sales" rows={@sales} row_click={&JS.navigate(~p"/sales/#{&1}")}>
   <:col
     :let={sale}
@@ -39,6 +89,16 @@
     :let={sale}
     label={
       raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
+      Author
+    </a>))
+    }
+  >
+    {if sale.book.author, do: sale.book.author.name, else: "Unknown"}
+  </:col>
+  <:col
+    :let={sale}
+    label={
+      raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
       Year
     </a>))
     }
@@ -54,16 +114,6 @@
     }
   >
     📊 {format_sales(sale.sales)}
-  </:col>
-  <:col
-    :let={sale}
-    label={
-      raw(~s(<a href="#{book_sort_path(@params)}" class="flex items-center hover:text-purple-600">
-      Author
-    </a>))
-    }
-  >
-    {if sale.book.author, do: sale.book.author.name, else: "Unknown"}
   </:col>
   <:action :let={sale}>
     <div class="sr-only">
@@ -83,7 +133,13 @@
   <.pagination
     page={@page}
     path={~p"/sales"}
-    params={@params}
+    params={
+      %{
+        "filter_book" => @filter_book,
+        "filter_year" => @filter_year,
+        "filter_author" => @filter_author
+      }
+    }
   />
 <% end %>
 
@@ -92,6 +148,12 @@
   <div class="text-center py-12">
     <div class="text-6xl mb-4">💰</div>
     <h3 class="text-lg font-medium text-base-content mb-2">No sales found</h3>
-    <p class="text-base-content/60">There are no sales records in the system yet.</p>
+    <p class="text-base-content/60">
+      <%= if @filter_book != "" or @filter_year != "" or @filter_author != "" do %>
+        No sales match your search criteria. Try adjusting your filters.
+      <% else %>
+        There are no sales records in the system yet.
+      <% end %>
+    </p>
   </div>
 <% end %>

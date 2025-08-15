@@ -9,7 +9,7 @@ defmodule WebApplication.Sales do
   alias WebApplication.Sales.Sale
 
   @doc """
-  Returns a paginated list of sales with optional sorting.
+  Returns a paginated list of sales with optional sorting and filtering.
 
   ## Examples
 
@@ -17,6 +17,12 @@ defmodule WebApplication.Sales do
       %Scrivener.Page{entries: [%Sale{}, ...], ...}
 
       iex> list_sales(%{sort_by: "book_name", sort_order: "asc", page: "2"})
+      %Scrivener.Page{entries: [%Sale{}, ...], ...}
+
+      iex> list_sales(%{"filter_book" => "Harry Potter", "filter_year" => "2023", "page" => "1"})
+      %Scrivener.Page{entries: [%Sale{}, ...], ...}
+
+      iex> list_sales(%{"filter_book" => "Harry Potter", "filter_year" => "2023", "filter_author" => "J.K. Rowling", "page" => "1"})
       %Scrivener.Page{entries: [%Sale{}, ...], ...}
 
   """
@@ -30,9 +36,45 @@ defmodule WebApplication.Sales do
         preload: [book: {b, author: a}]
       )
 
+    query = apply_filtering(query, params)
     query = apply_sorting(query, params)
 
     Repo.paginate(query, page: page, page_size: 10)
+  end
+
+  defp apply_filtering(query, params) do
+    query
+    |> filter_by_book(Map.get(params, "filter_book"))
+    |> filter_by_year(Map.get(params, "filter_year"))
+    |> filter_by_author(Map.get(params, "filter_author"))
+  end
+
+  defp filter_by_book(query, nil), do: query
+  defp filter_by_book(query, ""), do: query
+
+  defp filter_by_book(query, book_name) do
+    from([s, b, a] in query, where: ilike(b.name, ^"%#{book_name}%"))
+  end
+
+  defp filter_by_year(query, nil), do: query
+  defp filter_by_year(query, ""), do: query
+
+  defp filter_by_year(query, year) when is_binary(year) do
+    case Integer.parse(year) do
+      {year_int, ""} -> from([s, b, a] in query, where: s.year == ^year_int)
+      _ -> query
+    end
+  end
+
+  defp filter_by_year(query, year) when is_integer(year) do
+    from([s, b, a] in query, where: s.year == ^year)
+  end
+
+  defp filter_by_author(query, nil), do: query
+  defp filter_by_author(query, ""), do: query
+
+  defp filter_by_author(query, author_name) do
+    from([s, b, a] in query, where: ilike(a.name, ^"%#{author_name}%"))
   end
 
   defp apply_sorting(query, %{"sort_by" => "book_name", "sort_order" => "desc"}) do

@@ -7,7 +7,18 @@ defmodule WebApplicationWeb.SaleController do
 
   def index(conn, params) do
     page = Sales.list_sales(params)
-    render(conn, :index, page: page, sales: page.entries, params: params)
+    filter_book = Map.get(params, "filter_book", "")
+    filter_year = Map.get(params, "filter_year", "")
+    filter_author = Map.get(params, "filter_author", "")
+
+    render(conn, :index,
+      page: page,
+      sales: page.entries,
+      params: params,
+      filter_book: filter_book,
+      filter_year: filter_year,
+      filter_author: filter_author
+    )
   end
 
   def show(conn, %{"id" => id}) do
