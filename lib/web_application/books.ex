@@ -197,4 +197,73 @@ defmodule WebApplication.Books do
     )
     |> Repo.one()
   end
+
+  @doc """
+  Gets the top 50 selling books of all time with their total sales,
+  author's total sales, and whether they were in the top 5 for their publication year.
+
+  ## Examples
+
+      iex> get_top_selling_books()
+      [%{book: %Book{}, author: %Author{}, book_sales: 1000000, author_total_sales: 5000000, top_5_in_year: true}, ...]
+
+  """
+  def get_top_selling_books() do
+    # Get top 50 books by sales with author info
+    top_books_query =
+      from b in Book,
+        join: a in assoc(b, :author),
+        where: not is_nil(b.number_of_sales),
+        order_by: [desc: b.number_of_sales],
+        limit: 50,
+        select: %{
+          book: b,
+          author: a,
+          book_sales: b.number_of_sales
+        }
+
+    top_books = Repo.all(top_books_query)
+
+    # For each book, calculate author's total sales and check if it was top 5 in publication year
+    Enum.map(top_books, fn book_data ->
+      author_total_sales = get_author_total_sales(book_data.author.id)
+      top_5_in_year = is_book_top_5_in_publication_year?(book_data.book)
+
+      Map.merge(book_data, %{
+        author_total_sales: author_total_sales,
+        top_5_in_year: top_5_in_year
+      })
+    end)
+  end
+
+  defp get_author_total_sales(author_id) do
+    from(b in Book,
+      where: b.author_id == ^author_id and not is_nil(b.number_of_sales),
+      select: sum(b.number_of_sales)
+    )
+    |> Repo.one()
+    |> case do
+      nil -> 0
+      total -> total
+    end
+  end
+
+  defp is_book_top_5_in_publication_year?(%Book{date_of_publication: nil}), do: false
+
+  defp is_book_top_5_in_publication_year?(%Book{date_of_publication: pub_date, id: book_id}) do
+    pub_year = pub_date.year
+
+    # Get top 5 books by sales for the publication year
+    top_5_query =
+      from b in Book,
+        where:
+          fragment("EXTRACT(year FROM ?)", b.date_of_publication) == ^pub_year and
+            not is_nil(b.number_of_sales),
+        order_by: [desc: b.number_of_sales],
+        limit: 5,
+        select: b.id
+
+    top_5_ids = Repo.all(top_5_query)
+    book_id in top_5_ids
+  end
 end

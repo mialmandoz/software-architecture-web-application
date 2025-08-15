@@ -19,6 +19,7 @@ defmodule WebApplicationWeb.Router do
 
     get "/", PageController, :home
     get "/books/top-rated", BookController, :top_rated
+    get "/books/top-selling", BookController, :top_selling
     resources "/books", BookController
     get "/authors/statistics", AuthorController, :statistics
     resources "/authors", AuthorController

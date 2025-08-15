@@ -1,0 +1,101 @@
+<!-- Centered Title -->
+<div class="text-center mb-8">
+  <h1 class="text-4xl font-bold text-base-content">📈 Top 50 Selling Books of All Time</h1>
+  <p class="mt-2 text-base-content/70">
+    The highest-selling books with author sales and publication year rankings
+  </p>
+</div>
+
+<!-- Back Button -->
+<div class="mb-6">
+  <.link href={~p"/books"}>
+    <.button class="bg-gray-600 hover:bg-gray-700 px-4 py-2">← Back to Books</.button>
+  </.link>
+</div>
+
+<!-- Top Selling Books Table -->
+<div class="overflow-x-auto">
+  <table class="table table-zebra w-full">
+    <thead>
+      <tr>
+        <th class="text-center">Rank</th>
+        <th>Book Title</th>
+        <th>Author</th>
+        <th class="text-center">Publication Year</th>
+        <th class="text-center">Book Sales</th>
+        <th class="text-center">Author Total Sales</th>
+        <th class="text-center">Top 5 in Year</th>
+      </tr>
+    </thead>
+    <tbody>
+      <%= for {book_data, index} <- Enum.with_index(@top_selling_books, 1) do %>
+        <tr class="hover:bg-base-200">
+          <td class="text-center font-bold text-lg">
+            <%= case index do %>
+              <% 1 -> %>
+                <span class="text-yellow-500">🥇 {index}</span>
+              <% 2 -> %>
+                <span class="text-gray-400">🥈 {index}</span>
+              <% 3 -> %>
+                <span class="text-amber-600">🥉 {index}</span>
+              <% _ -> %>
+                <span class="text-base-content">{index}</span>
+            <% end %>
+          </td>
+          <td>
+            <div class="font-semibold text-primary hover:text-primary-focus">
+              <.link navigate={~p"/books/#{book_data.book}"}>
+                {book_data.book.name}
+              </.link>
+            </div>
+          </td>
+          <td>
+            <div class="font-medium">
+              <.link
+                navigate={~p"/authors/#{book_data.author}"}
+                class="text-secondary hover:text-secondary-focus"
+              >
+                {book_data.author.name}
+              </.link>
+            </div>
+          </td>
+          <td class="text-center">
+            <%= if book_data.book.date_of_publication do %>
+              {book_data.book.date_of_publication.year}
+            <% else %>
+              <span class="text-gray-500">Unknown</span>
+            <% end %>
+          </td>
+          <td class="text-center font-mono">
+            <span class="badge badge-success badge-lg">
+              {book_data.book_sales}
+            </span>
+          </td>
+          <td class="text-center font-mono">
+            <span class="badge badge-info badge-lg">
+              {book_data.author_total_sales}
+            </span>
+          </td>
+          <td class="text-center">
+            <%= if book_data.top_5_in_year do %>
+              <span class="badge badge-warning">⭐ Top 5</span>
+            <% else %>
+              <span class="text-gray-500">—</span>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<!-- Empty State -->
+<%= if Enum.empty?(@top_selling_books) do %>
+  <div class="text-center py-12">
+    <div class="text-6xl mb-4">📊</div>
+    <h3 class="text-lg font-medium text-base-content mb-2">No sales data available</h3>
+    <p class="text-base-content/60">
+      There are no books with sales data in the system yet.
+    </p>
+  </div>
+<% end %>
