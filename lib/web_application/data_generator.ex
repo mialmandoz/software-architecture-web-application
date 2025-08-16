@@ -883,7 +883,7 @@ defmodule WebApplication.DataGenerator do
       attrs = %{
         name: title,
         summary: generate_book_summary(genre),
-        date_of_publication: random_date(1950, 2024),
+        date_of_publication: random_date(2020, 2025),
         number_of_sales: 0,
         author_id: author.id
       }
