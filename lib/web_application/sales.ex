@@ -123,9 +123,19 @@ defmodule WebApplication.Sales do
 
   """
   def create_sale(attrs \\ %{}) do
-    %Sale{}
-    |> Sale.changeset(attrs)
-    |> Repo.insert()
+    result =
+      %Sale{}
+      |> Sale.changeset(attrs)
+      |> Repo.insert()
+
+    case result do
+      {:ok, sale} ->
+        update_book_sales_count(sale.book_id)
+        {:ok, sale}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -141,9 +151,27 @@ defmodule WebApplication.Sales do
 
   """
   def update_sale(%Sale{} = sale, attrs) do
-    sale
-    |> Sale.changeset(attrs)
-    |> Repo.update()
+    old_book_id = sale.book_id
+
+    result =
+      sale
+      |> Sale.changeset(attrs)
+      |> Repo.update()
+
+    case result do
+      {:ok, updated_sale} ->
+        # Update sales count for the old book (if book_id changed)
+        if old_book_id != updated_sale.book_id do
+          update_book_sales_count(old_book_id)
+        end
+
+        # Update sales count for the current book
+        update_book_sales_count(updated_sale.book_id)
+        {:ok, updated_sale}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -159,7 +187,18 @@ defmodule WebApplication.Sales do
 
   """
   def delete_sale(%Sale{} = sale) do
-    Repo.delete(sale)
+    book_id = sale.book_id
+
+    result = Repo.delete(sale)
+
+    case result do
+      {:ok, deleted_sale} ->
+        update_book_sales_count(book_id)
+        {:ok, deleted_sale}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -203,5 +242,32 @@ defmodule WebApplication.Sales do
     from(s in Sale, where: s.year == ^year, order_by: [desc: s.sales])
     |> Repo.all()
     |> Repo.preload(book: :author)
+  end
+
+  @doc """
+  Updates the total sales count for a book by summing all its individual sale records.
+
+  ## Examples
+
+      iex> update_book_sales_count(book_id)
+      :ok
+
+  """
+  def update_book_sales_count(book_id) do
+    total_sales =
+      from(s in Sale,
+        where: s.book_id == ^book_id,
+        select: sum(s.sales)
+      )
+      |> Repo.one()
+      |> case do
+        nil -> 0
+        total -> total
+      end
+
+    from(b in WebApplication.Books.Book, where: b.id == ^book_id)
+    |> Repo.update_all(set: [number_of_sales: total_sales])
+
+    :ok
   end
 end
