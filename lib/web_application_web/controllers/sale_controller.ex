@@ -28,7 +28,7 @@ defmodule WebApplicationWeb.SaleController do
 
   def new(conn, _params) do
     changeset = Sales.change_sale(%Sale{})
-    books = Books.list_books()
+    books = Books.list_all_books()
     render(conn, :new, changeset: changeset, books: books)
   end
 
@@ -40,7 +40,7 @@ defmodule WebApplicationWeb.SaleController do
         |> redirect(to: ~p"/sales/#{sale}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        books = Books.list_books()
+        books = Books.list_all_books()
         render(conn, :new, changeset: changeset, books: books)
     end
   end
@@ -48,7 +48,7 @@ defmodule WebApplicationWeb.SaleController do
   def edit(conn, %{"id" => id}) do
     sale = Sales.get_sale!(id)
     changeset = Sales.change_sale(sale)
-    books = Books.list_books()
+    books = Books.list_all_books()
     render(conn, :edit, sale: sale, changeset: changeset, books: books)
   end
 
@@ -62,7 +62,7 @@ defmodule WebApplicationWeb.SaleController do
         |> redirect(to: ~p"/sales/#{sale}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        books = Books.list_books()
+        books = Books.list_all_books()
         render(conn, :edit, sale: sale, changeset: changeset, books: books)
     end
   end

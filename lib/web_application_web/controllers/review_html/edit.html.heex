@@ -3,7 +3,12 @@
   <:subtitle>Use this form to update the book review.</:subtitle>
 </.header>
 
-<.review_form changeset={@changeset} action={~p"/reviews/#{@review}"} books={@books} />
+<.review_form
+  changeset={@changeset}
+  action={~p"/reviews/#{@review}"}
+  books={@books}
+  review={@review}
+/>
 
 <div class="mt-4">
   <.link

@@ -10,6 +10,24 @@ defmodule WebApplication.Books do
   alias WebApplication.Reviews.Review
 
   @doc """
+  Returns all books without pagination for use in form dropdowns.
+
+  ## Examples
+
+      iex> list_all_books()
+      [%Book{}, ...]
+
+  """
+  def list_all_books() do
+    from(b in Book,
+      join: a in assoc(b, :author),
+      preload: [author: a],
+      order_by: [asc: b.name]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Returns a paginated list of books with optional filtering.
 
   ## Examples

@@ -23,7 +23,7 @@ defmodule WebApplicationWeb.ReviewController do
 
   def new(conn, _params) do
     changeset = Reviews.change_review(%Review{})
-    books = Books.list_books()
+    books = Books.list_all_books()
     render(conn, :new, changeset: changeset, books: books)
   end
 
@@ -35,7 +35,7 @@ defmodule WebApplicationWeb.ReviewController do
         |> redirect(to: ~p"/reviews/#{review}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        books = Books.list_books()
+        books = Books.list_all_books()
         render(conn, :new, changeset: changeset, books: books)
     end
   end
@@ -43,7 +43,7 @@ defmodule WebApplicationWeb.ReviewController do
   def edit(conn, %{"id" => id}) do
     review = Reviews.get_review!(id)
     changeset = Reviews.change_review(review)
-    books = Books.list_books()
+    books = Books.list_all_books()
     render(conn, :edit, review: review, changeset: changeset, books: books)
   end
 
@@ -57,7 +57,7 @@ defmodule WebApplicationWeb.ReviewController do
         |> redirect(to: ~p"/reviews/#{review}")
 
       {:error, %Ecto.Changeset{} = changeset} ->
-        books = Books.list_books()
+        books = Books.list_all_books()
         render(conn, :edit, review: review, changeset: changeset, books: books)
     end
   end

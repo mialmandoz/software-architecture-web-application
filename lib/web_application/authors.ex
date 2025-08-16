@@ -9,6 +9,20 @@ defmodule WebApplication.Authors do
   alias WebApplication.Authors.Author
 
   @doc """
+  Returns all authors without pagination for use in form dropdowns.
+
+  ## Examples
+
+      iex> list_all_authors()
+      [%Author{}, ...]
+
+  """
+  def list_all_authors() do
+    from(a in Author, order_by: [asc: a.name])
+    |> Repo.all()
+  end
+
+  @doc """
   Returns a paginated list of authors with optional filtering.
 
   ## Examples

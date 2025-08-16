@@ -213,8 +213,12 @@ defmodule WebApplicationWeb.CoreComponents do
         <select
           id={@id}
           name={@name}
-          class={[@class || "w-full select", @errors != [] && (@error_class || "select-error")]}
+          class={[
+            @class || "w-full select max-h-48 overflow-y-auto",
+            @errors != [] && (@error_class || "select-error")
+          ]}
           multiple={@multiple}
+          size={@multiple && length(@options) > 10 && "10"}
           {@rest}
         >
           <option :if={@prompt} value="">{@prompt}</option>

@@ -9,6 +9,7 @@ defmodule WebApplicationWeb.ReviewHTML do
   attr :changeset, Ecto.Changeset, required: true
   attr :action, :string, required: true
   attr :books, :list, required: true
+  attr :review, :any, default: nil
 
   def review_form(assigns)
 
