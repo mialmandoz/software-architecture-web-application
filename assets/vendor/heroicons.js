@@ -5,18 +5,30 @@ const path = require("path")
 module.exports = plugin(function({matchComponents, theme}) {
   let iconsDir = path.join(__dirname, "../../deps/heroicons/optimized")
   let values = {}
+  
+  // Check if the optimized directory exists
+  if (!fs.existsSync(iconsDir)) {
+    console.warn("Heroicons optimized directory not found. Heroicons will be disabled.")
+    return
+  }
+  
   let icons = [
     ["", "/24/outline"],
     ["-solid", "/24/solid"],
     ["-mini", "/20/solid"],
     ["-micro", "/16/solid"]
   ]
+  
   icons.forEach(([suffix, dir]) => {
-    fs.readdirSync(path.join(iconsDir, dir)).forEach(file => {
-      let name = path.basename(file, ".svg") + suffix
-      values[name] = {name, fullPath: path.join(iconsDir, dir, file)}
-    })
+    const fullDir = path.join(iconsDir, dir)
+    if (fs.existsSync(fullDir)) {
+      fs.readdirSync(fullDir).forEach(file => {
+        let name = path.basename(file, ".svg") + suffix
+        values[name] = {name, fullPath: path.join(fullDir, file)}
+      })
+    }
   })
+  
   matchComponents({
     "hero": ({name, fullPath}) => {
       let content = fs.readFileSync(fullPath).toString().replace(/\r?\n|\r/g, "")

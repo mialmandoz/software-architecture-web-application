@@ -55,6 +55,25 @@ sudo apt install -y nodejs
 
 ## 2. Project Installation
 
+### Option 1: Docker Setup (Recommended)
+
+```bash
+# Clone the repository
+git clone https://github.com/mialmandoz/software-architecture-web-application
+cd software-architecture-web-application
+
+# Build and start the application with Docker
+docker-compose up --build
+
+# If (Phoenix.Router.NoRouteError) no route found for GET /assets/css/app.css (WebApplicationWeb.Router)
+# Restart docker:
+-> Ctrl+C -> docker-compose up --build
+```
+
+The application will be available at: **http://localhost:4000**
+
+### Option 2: Local Development Setup
+
 ```bash
 # Clone the repository
 git clone https://github.com/mialmandoz/software-architecture-web-application
@@ -73,9 +92,31 @@ mix assets.setup
 
 ## 3. Database Configuration
 
+### Docker Setup (Automatic)
+
+When using Docker, the database is automatically configured:
+
+```bash
+# Start the application (includes database setup)
+docker-compose up --build
+
+# Stop the application (data persists)
+docker-compose down
+
+# Restart with existing data
+docker-compose up
+
+# Delete database
+docker-compose down --volumes
+```
+
+**Data Persistence**: Your database data automatically persists between container restarts. The PostgreSQL data is stored in a Docker volume, so you can safely stop and restart containers without losing your books, authors, reviews, and sales data.
+
+### Local Development Setup
+
 ```bash
 # Start PostgreSQL with Docker
-docker-compose up -d
+docker-compose up -d db
 docker ps  # Verify it's running
 
 # Option 1: Use the setup script (recommended for new users)
@@ -217,6 +258,7 @@ web_application/
 ├── .formatter.exs                   # Formatter configuration
 ├── .gitignore                       # Files ignored by Git
 ├── AGENTS.md                        # Agents documentation
+├── Dockerfile                       # Docker container configuration
 ├── README.md                        # This file
 ├── docker-compose.yml               # PostgreSQL configuration
 ├── mix.exs                          # Project dependencies and configuration
@@ -232,6 +274,7 @@ web_application/
 - **Validations** in all forms
 - **Modern interface** with DaisyUI and Tailwind CSS
 - **Reusable components** for pagination and forms
+- **Docker containerization** with automatic database setup and data persistence
 
 ---
 

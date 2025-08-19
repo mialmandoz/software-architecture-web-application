@@ -11,6 +11,21 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  web:
+    container_name: web_application_app
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=dev
+      - DB_HOST=db
+    depends_on:
+      - db
+    volumes:
+      - .:/app
+      - /app/deps
+      - /app/_build
+
 volumes:
   postgres_data:
 
