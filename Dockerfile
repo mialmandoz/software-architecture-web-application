@@ -19,8 +19,12 @@ RUN mix deps.get
 # Copy everything else
 COPY . .
 
+# Copy and make startup script executable
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
+
 # Expose port
 EXPOSE 4000
 
-# Start script that waits for DB, creates/migrates DB (only seeds if empty) and starts server
-CMD ["sh", "-c", "while ! pg_isready -h db -p 5432 -U postgres; do echo 'Waiting for database...'; sleep 2; done && mix ecto.create && mix ecto.migrate && if [ $(mix run -e 'IO.puts(WebApplication.Repo.aggregate(WebApplication.Books.Book, :count))' 2>/dev/null || echo 0) -eq 0 ]; then mix run priv/repo/seeds.exs; fi && mix phx.server"]
+# Use startup script
+CMD ["/start.sh"]

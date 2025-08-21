@@ -46,19 +46,6 @@ docker-compose up --build
 
 The application will be available at: **http://localhost:4000**
 
-### Important:
-If the error: 
-```
-(Phoenix.Router.NoRouteError) no route found for GET /assets/css/app.css (WebApplicationWeb.Router)
-```
-appears:
-
-Close the website and restart docker:
-
-**-> Ctrl+C -> docker-compose up --build**
-
-And open the website again
-
 ---
 
 **Data Persistence**: Your database data automatically persists between container restarts. The PostgreSQL data is stored in a Docker volume, so you can safely stop and restart containers without losing your books, authors, reviews, and sales data.
@@ -182,7 +169,8 @@ web_application/
 ├── README.md                        # This file
 ├── docker-compose.yml               # PostgreSQL configuration
 ├── mix.exs                          # Project dependencies and configuration
-└── mix.lock                         # Exact dependency versions
+├── mix.lock                         # Exact dependency versions
+└── start.sh                         # Docker startup script
 ```
 
 ### Implemented Features
