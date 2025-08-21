@@ -6,56 +6,34 @@ Web application developed with **Phoenix Framework** and **PostgreSQL**.
 
 ## 1. Requirements
 
+Only **Docker** is required to run this application:
+
 ### macOS
 
 ```bash
-# Install Homebrew (if you don't have it)
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# Install Elixir and Erlang
-brew install elixir
-
 # Install Docker Desktop
 brew install --cask docker
-
-# (Optional) Install Node.js if npm tools are required
-brew install node
 ```
 
 ### Linux (Ubuntu/Debian)
 
 ```bash
-# Update the system
-sudo apt update
-
-# Install Erlang and Elixir
-wget https://packages.erlang-solutions.com/erlang-solutions_2.0_all.deb
-sudo dpkg -i erlang-solutions_2.0_all.deb
-sudo apt update
-sudo apt install esl-erlang elixir
-
 # Install Docker
 sudo apt install docker.io docker-compose
 sudo systemctl enable --now docker
 sudo usermod -aG docker $USER
-
-# (Optional) Install Node.js
-curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-sudo apt install -y nodejs
 ```
 
 ### Windows
 
-1. **Install Erlang and Elixir:** https://elixir-lang.org/install.html#windows
-2. **Install Docker Desktop:** https://www.docker.com/products/docker-desktop
-3. **(Optional) Install Node.js:** https://nodejs.org/
-4. **Install Git:** https://git-scm.com/
+- **Install Docker Desktop:** https://www.docker.com/products/docker-desktop
+- **Install Git:** https://git-scm.com/
 
 ---
 
 ## 2. Project Installation
 
-### Option 1: Docker Setup (Recommended)
+### Docker Setup (Recommended)
 
 ```bash
 # Clone the repository
@@ -64,88 +42,30 @@ cd software-architecture-web-application
 
 # Build and start the application with Docker
 docker-compose up --build
-
-# If (Phoenix.Router.NoRouteError) no route found for GET /assets/css/app.css (WebApplicationWeb.Router)
-# Restart docker:
--> Ctrl+C -> docker-compose up --build
 ```
 
 The application will be available at: **http://localhost:4000**
 
-### Option 2: Local Development Setup
-
-```bash
-# Clone the repository
-git clone https://github.com/mialmandoz/software-architecture-web-application
-cd software-architecture-web-application
-
-# Install Phoenix tools
-mix local.hex --force
-mix archive.install hex phx_new --force
-
-# Install dependencies
-mix deps.get
-mix assets.setup
+### Important:
+If the error: 
 ```
+(Phoenix.Router.NoRouteError) no route found for GET /assets/css/app.css (WebApplicationWeb.Router)
+```
+appears:
+
+Close the website and restart docker:
+
+**-> Ctrl+C -> docker-compose up --build**
+
+And open the website again
 
 ---
-
-## 3. Database Configuration
-
-### Docker Setup (Automatic)
-
-When using Docker, the database is automatically configured:
-
-```bash
-# Start the application (includes database setup)
-docker-compose up --build
-
-# Stop the application (data persists)
-docker-compose down
-
-# Restart with existing data
-docker-compose up
-
-# Delete database
-docker-compose down --volumes
-```
 
 **Data Persistence**: Your database data automatically persists between container restarts. The PostgreSQL data is stored in a Docker volume, so you can safely stop and restart containers without losing your books, authors, reviews, and sales data.
 
-### Local Development Setup
-
-```bash
-# Start PostgreSQL with Docker
-docker-compose up -d db
-docker ps  # Verify it's running
-
-# Option 1: Use the setup script (recommended for new users)
-chmod +x setup.sh
-./setup.sh
-
-# Option 2: Manual setup
-mix ecto.create
-mix ecto.migrate
-mix run priv/repo/seeds.exs
-
-# Reset and seed the database
-mix ecto.reset
-```
-
 ---
 
-## 4. Running the Application
-
-```bash
-# Start server
-mix phx.server
-```
-
-The application will be available at: **http://localhost:4000** (development mode)
-
----
-
-## 5. Project Structure
+## 3. Project Structure
 
 ```
 web_application/
@@ -278,7 +198,7 @@ web_application/
 
 ---
 
-## 6. Useful Resources
+## 4. Useful Resources
 
 - [Phoenix Framework](https://hexdocs.pm/phoenix)
 - [Elixir](https://elixir-lang.org/docs.html)
