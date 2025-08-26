@@ -12,6 +12,7 @@ defmodule WebApplication.Application do
       WebApplication.Repo,
       {DNSCluster, query: Application.get_env(:web_application, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: WebApplication.PubSub},
+      WebApplication.Cache,
       # Start a worker by calling: WebApplication.Worker.start_link(arg)
       # {WebApplication.Worker, arg},
       # Start to serve requests, typically the last entry

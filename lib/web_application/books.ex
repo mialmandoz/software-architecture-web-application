@@ -5,6 +5,7 @@ defmodule WebApplication.Books do
 
   import Ecto.Query, warn: false
   alias WebApplication.Repo
+  alias WebApplication.Cache
 
   alias WebApplication.Books.Book
   alias WebApplication.Reviews.Review
@@ -19,12 +20,25 @@ defmodule WebApplication.Books do
 
   """
   def list_all_books() do
-    from(b in Book,
-      join: a in assoc(b, :author),
-      preload: [author: a],
-      order_by: [asc: b.name]
-    )
-    |> Repo.all()
+    cache_key = Cache.books_list_key(%{all: true})
+
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        books =
+          from(b in Book,
+            join: a in assoc(b, :author),
+            preload: [author: a],
+            order_by: [asc: b.name]
+          )
+          |> Repo.all()
+
+        # 30 minutes in milliseconds
+        Cache.put(cache_key, books, 1_800_000)
+        books
+
+      {:ok, books} ->
+        books
+    end
   end
 
   @doc """
@@ -45,42 +59,60 @@ defmodule WebApplication.Books do
     filter_summary = Map.get(params, "filter_summary", "")
     page = Map.get(params, "page", "1") |> String.to_integer()
 
-    query =
-      from b in Book,
-        join: a in assoc(b, :author),
-        preload: [author: a]
+    cache_key =
+      Cache.books_list_key(%{
+        filter_name: filter_name,
+        filter_author: filter_author,
+        filter_summary: filter_summary,
+        page: page
+      })
 
-    # Apply book name filter
-    query =
-      if filter_name != "" do
-        from [b, a] in query,
-          where: ilike(b.name, ^"%#{filter_name}%")
-      else
-        query
-      end
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        query =
+          from b in Book,
+            join: a in assoc(b, :author),
+            preload: [author: a]
 
-    # Apply author name filter
-    query =
-      if filter_author != "" do
-        from [b, a] in query,
-          where: ilike(a.name, ^"%#{filter_author}%")
-      else
-        query
-      end
+        # Apply book name filter
+        query =
+          if filter_name != "" do
+            from [b, a] in query,
+              where: ilike(b.name, ^"%#{filter_name}%")
+          else
+            query
+          end
 
-    # Apply summary filter
-    query =
-      if filter_summary != "" do
-        from [b, a] in query,
-          where: ilike(b.summary, ^"%#{filter_summary}%")
-      else
-        query
-      end
+        # Apply author name filter
+        query =
+          if filter_author != "" do
+            from [b, a] in query,
+              where: ilike(a.name, ^"%#{filter_author}%")
+          else
+            query
+          end
 
-    # Order by book name for consistent display
-    query = from [b, a] in query, order_by: [asc: b.name]
+        # Apply summary filter
+        query =
+          if filter_summary != "" do
+            from [b, a] in query,
+              where: ilike(b.summary, ^"%#{filter_summary}%")
+          else
+            query
+          end
 
-    Repo.paginate(query, page: page, page_size: 10)
+        result =
+          query
+          |> order_by([b, a], asc: b.name)
+          |> Repo.paginate(page: page, page_size: 10)
+
+        # 5 minutes in milliseconds
+        Cache.put(cache_key, result, 300_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -115,9 +147,20 @@ defmodule WebApplication.Books do
 
   """
   def create_book(attrs \\ %{}) do
-    %Book{}
-    |> Book.changeset(attrs)
-    |> Repo.insert()
+    case %Book{}
+         |> Book.changeset(attrs)
+         |> Repo.insert() do
+      {:ok, _book} = result ->
+        # Invalidate related caches
+        Cache.delete_pattern("books_list:*")
+        Cache.delete_pattern("review_scores:*")
+        Cache.delete("top_rated_books")
+        Cache.delete("top_selling_books")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -133,9 +176,21 @@ defmodule WebApplication.Books do
 
   """
   def update_book(%Book{} = book, attrs) do
-    book
-    |> Book.changeset(attrs)
-    |> Repo.update()
+    case book
+         |> Book.changeset(attrs)
+         |> Repo.update() do
+      {:ok, _updated_book} = result ->
+        # Invalidate caches for this book and related lists
+        Cache.delete(Cache.book_key(book.id))
+        Cache.delete_pattern("books_list:*")
+        Cache.delete_pattern("review_scores:*")
+        Cache.delete("top_rated_books")
+        Cache.delete("top_selling_books")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -151,7 +206,19 @@ defmodule WebApplication.Books do
 
   """
   def delete_book(%Book{} = book) do
-    Repo.delete(book)
+    case Repo.delete(book) do
+      {:ok, _deleted_book} = result ->
+        # Invalidate caches for this book and related lists
+        Cache.delete(Cache.book_key(book.id))
+        Cache.delete_pattern("books_list:*")
+        Cache.delete_pattern("review_scores:*")
+        Cache.delete("top_rated_books")
+        Cache.delete("top_selling_books")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -180,51 +247,81 @@ defmodule WebApplication.Books do
 
   """
   def get_top_rated_books() do
-    # Get books with their average review scores
-    books_with_avg_scores =
-      from b in Book,
-        join: r in assoc(b, :reviews),
-        join: a in assoc(b, :author),
-        group_by: [b.id, a.id],
-        select: %{
-          book_id: b.id,
-          book: b,
-          author: a,
-          avg_score: avg(r.score)
-        },
-        order_by: [desc: avg(r.score)],
-        limit: 10
+    cache_key = "top_rated_books"
 
-    top_books = Repo.all(books_with_avg_scores)
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        books_with_avg_scores =
+          from b in Book,
+            join: r in assoc(b, :reviews),
+            join: a in assoc(b, :author),
+            group_by: [
+              b.id,
+              b.name,
+              b.summary,
+              b.date_of_publication,
+              b.number_of_sales,
+              b.author_id,
+              a.id,
+              a.name,
+              a.date_of_birth,
+              a.country_of_origin,
+              a.short_description
+            ],
+            having: count(r.id) >= 1,
+            select: %{
+              book: b,
+              author: a,
+              avg_score: avg(r.score)
+            },
+            order_by: [desc: avg(r.score)],
+            limit: 10
 
-    # For each top book, get the best and worst reviews
-    Enum.map(top_books, fn book_data ->
-      best_review = get_best_review_for_book(book_data.book_id)
-      worst_review = get_worst_review_for_book(book_data.book_id)
+        books_with_scores = Repo.all(books_with_avg_scores)
 
-      Map.merge(book_data, %{
-        best_review: best_review,
-        worst_review: worst_review
-      })
-    end)
-  end
+        # For each book, get best/worst reviews
+        result =
+          Enum.map(books_with_scores, fn book_data ->
+            # Get best and worst reviews for this book
+            reviews_query =
+              from r in Review,
+                where: r.book_id == ^book_data.book.id,
+                order_by: [desc: r.score, desc: r.number_of_upvotes]
 
-  defp get_best_review_for_book(book_id) do
-    from(r in Review,
-      where: r.book_id == ^book_id,
-      order_by: [desc: r.score, desc: r.number_of_upvotes],
-      limit: 1
-    )
-    |> Repo.one()
-  end
+            reviews = Repo.all(reviews_query)
+            best_review = List.first(reviews)
 
-  defp get_worst_review_for_book(book_id) do
-    from(r in Review,
-      where: r.book_id == ^book_id,
-      order_by: [asc: r.score, desc: r.number_of_upvotes],
-      limit: 1
-    )
-    |> Repo.one()
+            worst_review =
+              reviews
+              |> Enum.sort_by(& &1.score)
+              |> List.first()
+
+            %{
+              book: book_data.book,
+              author: book_data.author,
+              avg_score:
+                case book_data.avg_score do
+                  %Decimal{} = decimal ->
+                    decimal |> Decimal.to_float() |> then(&(trunc(&1 * 10) / 10))
+
+                  score when is_float(score) ->
+                    trunc(score * 10) / 10
+
+                  _ ->
+                    0.0
+                end,
+              best_review: best_review,
+              worst_review: worst_review
+            }
+          end)
+
+        # 30 minutes in milliseconds
+        Cache.put(cache_key, result, 1_800_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -238,31 +335,44 @@ defmodule WebApplication.Books do
 
   """
   def get_top_selling_books() do
-    # Get top 50 books by sales with author info
-    top_books_query =
-      from b in Book,
-        join: a in assoc(b, :author),
-        where: not is_nil(b.number_of_sales),
-        order_by: [desc: b.number_of_sales],
-        limit: 50,
-        select: %{
-          book: b,
-          author: a,
-          book_sales: b.number_of_sales
-        }
+    cache_key = "top_selling_books"
 
-    top_books = Repo.all(top_books_query)
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        # Get top 50 books by sales with author info
+        top_books_query =
+          from b in Book,
+            join: a in assoc(b, :author),
+            where: not is_nil(b.number_of_sales),
+            order_by: [desc: b.number_of_sales],
+            limit: 50,
+            select: %{
+              book: b,
+              author: a,
+              book_sales: b.number_of_sales
+            }
 
-    # For each book, calculate author's total sales and check if it was top 5 in publication year
-    Enum.map(top_books, fn book_data ->
-      author_total_sales = get_author_total_sales(book_data.author.id)
-      top_5_in_year = is_book_top_5_in_publication_year?(book_data.book)
+        top_books = Repo.all(top_books_query)
 
-      Map.merge(book_data, %{
-        author_total_sales: author_total_sales,
-        top_5_in_year: top_5_in_year
-      })
-    end)
+        # For each book, calculate author's total sales and check if it was top 5 in publication year
+        result =
+          Enum.map(top_books, fn book_data ->
+            author_total_sales = get_author_total_sales(book_data.author.id)
+            top_5_in_year = is_book_top_5_in_publication_year?(book_data.book)
+
+            Map.merge(book_data, %{
+              author_total_sales: author_total_sales,
+              top_5_in_year: top_5_in_year
+            })
+          end)
+
+        # 30 minutes in milliseconds
+        Cache.put(cache_key, result, 1_800_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   defp get_author_total_sales(author_id) do

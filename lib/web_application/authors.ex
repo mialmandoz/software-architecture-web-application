@@ -5,6 +5,7 @@ defmodule WebApplication.Authors do
 
   import Ecto.Query, warn: false
   alias WebApplication.Repo
+  alias WebApplication.Cache
 
   alias WebApplication.Authors.Author
 
@@ -18,8 +19,21 @@ defmodule WebApplication.Authors do
 
   """
   def list_all_authors() do
-    from(a in Author, order_by: [asc: a.name])
-    |> Repo.all()
+    cache_key = "authors_all"
+
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        result =
+          from(a in Author, order_by: [asc: a.name])
+          |> Repo.all()
+
+        # 30 minutes
+        Cache.put(cache_key, result, 1_800_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -39,30 +53,46 @@ defmodule WebApplication.Authors do
     filter_country = Map.get(params, "filter_country", "")
     page = Map.get(params, "page", "1") |> String.to_integer()
 
-    query = from(a in Author)
+    cache_key =
+      Cache.authors_list_key(%{
+        filter_name: filter_name,
+        filter_country: filter_country,
+        page: page
+      })
 
-    # Apply name filter
-    query =
-      if filter_name != "" do
-        from a in query,
-          where: ilike(a.name, ^"%#{filter_name}%")
-      else
-        query
-      end
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        query = from(a in Author)
 
-    # Apply country filter
-    query =
-      if filter_country != "" do
-        from a in query,
-          where: ilike(a.country_of_origin, ^"%#{filter_country}%")
-      else
-        query
-      end
+        # Apply name filter
+        query =
+          if filter_name != "" do
+            from a in query,
+              where: ilike(a.name, ^"%#{filter_name}%")
+          else
+            query
+          end
 
-    # Order by name for consistent display
-    query = from a in query, order_by: [asc: a.name]
+        # Apply country filter
+        query =
+          if filter_country != "" do
+            from a in query,
+              where: ilike(a.country_of_origin, ^"%#{filter_country}%")
+          else
+            query
+          end
 
-    Repo.paginate(query, page: page, page_size: 10)
+        # Order by name for consistent display
+        query = from a in query, order_by: [asc: a.name]
+
+        result = Repo.paginate(query, page: page, page_size: 10)
+        # 5 minutes
+        Cache.put(cache_key, result, 300_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -75,66 +105,82 @@ defmodule WebApplication.Authors do
 
   """
   def get_author_statistics(sort_by \\ "name", sort_order \\ "asc", filter_name \\ "") do
-    query =
-      from a in Author,
-        left_join: b in assoc(a, :books),
-        left_join: r in assoc(b, :reviews),
-        left_join: s in assoc(b, :sales),
-        group_by: [a.id, a.name, a.date_of_birth, a.country_of_origin, a.short_description],
-        select: %{
-          author: a,
-          book_count: fragment("COUNT(DISTINCT ?)", b.id),
-          avg_score: coalesce(avg(r.score), 0.0),
-          total_sales: coalesce(sum(s.sales), 0)
-        }
+    cache_key =
+      Cache.author_stats_key(%{
+        sort_by: sort_by,
+        sort_order: sort_order,
+        filter_name: filter_name
+      })
 
-    # Apply name filter if provided
-    query =
-      if filter_name != "" do
-        from [a, b, r, s] in query,
-          where: ilike(a.name, ^"%#{filter_name}%")
-      else
-        query
-      end
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        query =
+          from a in Author,
+            left_join: b in assoc(a, :books),
+            left_join: r in assoc(b, :reviews),
+            left_join: s in assoc(b, :sales),
+            group_by: [a.id, a.name, a.date_of_birth, a.country_of_origin, a.short_description],
+            select: %{
+              author: a,
+              book_count: fragment("COUNT(DISTINCT ?)", b.id),
+              avg_score: coalesce(avg(r.score), 0.0),
+              total_sales: coalesce(sum(s.sales), 0)
+            }
 
-    # Apply sorting
-    query =
-      case {sort_by, sort_order} do
-        {"name", "asc"} ->
-          from [a, b, r, s] in query, order_by: [asc: a.name]
+        # Apply name filter if provided
+        query =
+          if filter_name != "" do
+            from [a, b, r, s] in query,
+              where: ilike(a.name, ^"%#{filter_name}%")
+          else
+            query
+          end
 
-        {"name", "desc"} ->
-          from [a, b, r, s] in query, order_by: [desc: a.name]
+        # Apply sorting
+        query =
+          case {sort_by, sort_order} do
+            {"name", "asc"} ->
+              from [a, b, r, s] in query, order_by: [asc: a.name]
 
-        {"book_count", "asc"} ->
-          from [a, b, r, s] in query, order_by: [asc: fragment("COUNT(DISTINCT ?)", b.id)]
+            {"name", "desc"} ->
+              from [a, b, r, s] in query, order_by: [desc: a.name]
 
-        {"book_count", "desc"} ->
-          from [a, b, r, s] in query, order_by: [desc: fragment("COUNT(DISTINCT ?)", b.id)]
+            {"book_count", "asc"} ->
+              from [a, b, r, s] in query, order_by: [asc: fragment("COUNT(DISTINCT ?)", b.id)]
 
-        {"avg_score", "asc"} ->
-          from [a, b, r, s] in query, order_by: [asc: coalesce(avg(r.score), 0.0)]
+            {"book_count", "desc"} ->
+              from [a, b, r, s] in query, order_by: [desc: fragment("COUNT(DISTINCT ?)", b.id)]
 
-        {"avg_score", "desc"} ->
-          from [a, b, r, s] in query, order_by: [desc: coalesce(avg(r.score), 0.0)]
+            {"avg_score", "asc"} ->
+              from [a, b, r, s] in query, order_by: [asc: coalesce(avg(r.score), 0.0)]
 
-        {"total_sales", "asc"} ->
-          from [a, b, r, s] in query, order_by: [asc: coalesce(sum(s.sales), 0)]
+            {"avg_score", "desc"} ->
+              from [a, b, r, s] in query, order_by: [desc: coalesce(avg(r.score), 0.0)]
 
-        {"total_sales", "desc"} ->
-          from [a, b, r, s] in query, order_by: [desc: coalesce(sum(s.sales), 0)]
+            {"total_sales", "asc"} ->
+              from [a, b, r, s] in query, order_by: [asc: coalesce(sum(s.sales), 0)]
 
-        {"country", "asc"} ->
-          from [a, b, r, s] in query, order_by: [asc: a.country_of_origin]
+            {"total_sales", "desc"} ->
+              from [a, b, r, s] in query, order_by: [desc: coalesce(sum(s.sales), 0)]
 
-        {"country", "desc"} ->
-          from [a, b, r, s] in query, order_by: [desc: a.country_of_origin]
+            {"country", "asc"} ->
+              from [a, b, r, s] in query, order_by: [asc: a.country_of_origin]
 
-        _ ->
-          from [a, b, r, s] in query, order_by: [asc: a.name]
-      end
+            {"country", "desc"} ->
+              from [a, b, r, s] in query, order_by: [desc: a.country_of_origin]
 
-    Repo.all(query)
+            _ ->
+              from [a, b, r, s] in query, order_by: [asc: a.name]
+          end
+
+        result = Repo.all(query)
+        # 10 minutes
+        Cache.put(cache_key, result, 600_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -151,7 +197,20 @@ defmodule WebApplication.Authors do
       ** (Ecto.NoResultsError)
 
   """
-  def get_author!(id), do: Repo.get!(Author, id)
+  def get_author!(id) do
+    cache_key = Cache.author_key(id)
+
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        result = Repo.get!(Author, id)
+        # 1 hour
+        Cache.put(cache_key, result, 3_600_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
+  end
 
   @doc """
   Creates a author.
@@ -166,9 +225,19 @@ defmodule WebApplication.Authors do
 
   """
   def create_author(attrs \\ %{}) do
-    %Author{}
-    |> Author.changeset(attrs)
-    |> Repo.insert()
+    case %Author{}
+         |> Author.changeset(attrs)
+         |> Repo.insert() do
+      {:ok, _author} = result ->
+        # Invalidate related caches
+        Cache.delete_pattern("authors_list:*")
+        Cache.delete_pattern("author_stats:*")
+        Cache.delete("authors_all")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -184,9 +253,20 @@ defmodule WebApplication.Authors do
 
   """
   def update_author(%Author{} = author, attrs) do
-    author
-    |> Author.changeset(attrs)
-    |> Repo.update()
+    case author
+         |> Author.changeset(attrs)
+         |> Repo.update() do
+      {:ok, _updated_author} = result ->
+        # Invalidate related caches
+        Cache.delete(Cache.author_key(author.id))
+        Cache.delete_pattern("authors_list:*")
+        Cache.delete_pattern("author_stats:*")
+        Cache.delete("authors_all")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -202,7 +282,18 @@ defmodule WebApplication.Authors do
 
   """
   def delete_author(%Author{} = author) do
-    Repo.delete(author)
+    case Repo.delete(author) do
+      {:ok, _deleted_author} = result ->
+        # Invalidate related caches
+        Cache.delete(Cache.author_key(author.id))
+        Cache.delete_pattern("authors_list:*")
+        Cache.delete_pattern("author_stats:*")
+        Cache.delete("authors_all")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """

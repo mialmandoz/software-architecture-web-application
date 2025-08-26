@@ -5,6 +5,7 @@ defmodule WebApplication.Reviews do
 
   import Ecto.Query, warn: false
   alias WebApplication.Repo
+  alias WebApplication.Cache
 
   alias WebApplication.Reviews.Review
 
@@ -22,25 +23,37 @@ defmodule WebApplication.Reviews do
   """
   def list_reviews(params \\ %{}) do
     page = Map.get(params, "page", "1") |> String.to_integer()
+    filter_book = Map.get(params, "filter_book")
 
-    query = from(r in Review, join: b in assoc(r, :book), preload: :book)
+    cache_key = Cache.reviews_list_key(%{filter_book: filter_book, page: page})
 
-    query =
-      case Map.get(params, "filter_book") do
-        nil ->
-          query
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        query = from(r in Review, join: b in assoc(r, :book), preload: :book)
 
-        "" ->
-          query
+        query =
+          case filter_book do
+            nil ->
+              query
 
-        book_name ->
-          from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
-      end
+            "" ->
+              query
 
-    # Order by review ID for consistent pagination
-    query = from [r, b] in query, order_by: [desc: r.id]
+            book_name ->
+              from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
+          end
 
-    Repo.paginate(query, page: page, page_size: 10)
+        # Order by review ID for consistent pagination
+        query = from [r, b] in query, order_by: [desc: r.id]
+
+        result = Repo.paginate(query, page: page, page_size: 10)
+        # 5 minutes in milliseconds
+        Cache.put(cache_key, result, 300_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 
   @doc """
@@ -75,9 +88,19 @@ defmodule WebApplication.Reviews do
 
   """
   def create_review(attrs \\ %{}) do
-    %Review{}
-    |> Review.changeset(attrs)
-    |> Repo.insert()
+    case %Review{}
+         |> Review.changeset(attrs)
+         |> Repo.insert() do
+      {:ok, review} = result ->
+        # Invalidate related caches
+        Cache.delete_pattern("reviews_list:*")
+        Cache.delete_pattern("review_scores:#{review.book_id}")
+        Cache.delete_pattern("book_reviews:#{review.book_id}")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -93,9 +116,20 @@ defmodule WebApplication.Reviews do
 
   """
   def update_review(%Review{} = review, attrs) do
-    review
-    |> Review.changeset(attrs)
-    |> Repo.update()
+    case review
+         |> Review.changeset(attrs)
+         |> Repo.update() do
+      {:ok, _updated_review} = result ->
+        # Invalidate related caches
+        Cache.delete(Cache.review_key(review.id))
+        Cache.delete_pattern("reviews_list:*")
+        Cache.delete_pattern("review_scores:#{review.book_id}")
+        Cache.delete_pattern("book_reviews:#{review.book_id}")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -111,7 +145,18 @@ defmodule WebApplication.Reviews do
 
   """
   def delete_review(%Review{} = review) do
-    Repo.delete(review)
+    case Repo.delete(review) do
+      {:ok, _deleted_review} = result ->
+        # Invalidate related caches
+        Cache.delete(Cache.review_key(review.id))
+        Cache.delete_pattern("reviews_list:*")
+        Cache.delete_pattern("review_scores:#{review.book_id}")
+        Cache.delete_pattern("book_reviews:#{review.book_id}")
+        result
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -137,8 +182,62 @@ defmodule WebApplication.Reviews do
 
   """
   def list_reviews_for_book(book_id) do
-    from(r in Review, where: r.book_id == ^book_id)
-    |> Repo.all()
-    |> Repo.preload(:book)
+    cache_key = Cache.book_reviews_key(book_id)
+
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        result =
+          from(r in Review, where: r.book_id == ^book_id)
+          |> Repo.all()
+          |> Repo.preload(:book)
+
+        # 30 minutes in milliseconds
+        Cache.put(cache_key, result, 1_800_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
+  end
+
+  @doc """
+  Returns review statistics for a book (average score, count).
+
+  ## Examples
+
+      iex> get_book_review_stats(book_id)
+      %{average_score: 4.2, review_count: 15}
+
+  """
+  def get_book_review_stats(book_id) do
+    cache_key = Cache.review_scores_key(book_id)
+
+    case Cache.get(cache_key) do
+      {:ok, nil} ->
+        query =
+          from(r in Review,
+            where: r.book_id == ^book_id,
+            select: %{
+              average_score: avg(r.score),
+              review_count: count(r.id)
+            }
+          )
+
+        result =
+          case Repo.one(query) do
+            %{average_score: nil, review_count: 0} ->
+              %{average_score: 0.0, review_count: 0}
+
+            %{average_score: avg, review_count: count} ->
+              %{average_score: Float.round(avg, 1), review_count: count}
+          end
+
+        # 2 hours in milliseconds
+        Cache.put(cache_key, result, 7_200_000)
+        result
+
+      {:ok, cached_result} ->
+        cached_result
+    end
   end
 end

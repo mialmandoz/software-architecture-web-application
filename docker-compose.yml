@@ -11,6 +11,17 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
+  redis:
+    container_name: web_application_redis
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    profiles:
+      - cache
+
   web:
     container_name: web_application_app
     build: .
@@ -25,9 +36,32 @@ services:
       - .:/app
       - /app/deps
       - /app/_build
+    profiles:
+      - no-cache
+
+  web_with_cache:
+    container_name: web_application_app_cache
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=dev
+      - DB_HOST=db
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - .:/app
+      - /app/deps
+      - /app/_build
+    profiles:
+      - cache
 
 volumes:
   postgres_data:
+  redis_data:
 
 networks:
   default:
