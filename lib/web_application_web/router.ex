@@ -18,6 +18,7 @@ defmodule WebApplicationWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/books/search", BookController, :search
     get "/books/top-rated", BookController, :top_rated
     get "/books/top-selling", BookController, :top_selling
     resources "/books", BookController

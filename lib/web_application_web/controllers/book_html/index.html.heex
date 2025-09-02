@@ -9,6 +9,11 @@
   <.link href={~p"/books/new"}>
     <.button class="btn btn-success btn-lg">✍️ New Book</.button>
   </.link>
+  <%= if @search_available do %>
+    <.link href={~p"/books/search"}>
+      <.button class="btn btn-info btn-lg">🔍 Advanced Search</.button>
+    </.link>
+  <% end %>
   <.link href={~p"/books/top-rated"}>
     <.button class="btn btn-warning btn-lg">
       🏆 Top 10 Rated Books

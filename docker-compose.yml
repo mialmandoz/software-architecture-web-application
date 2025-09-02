@@ -22,6 +22,21 @@ services:
     profiles:
       - cache
 
+  opensearch:
+    container_name: web_application_opensearch
+    image: opensearchproject/opensearch:2.11.0
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=OpenSearch123!
+      - DISABLE_SECURITY_PLUGIN=true
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    profiles:
+      - search
+
   web:
     container_name: web_application_app
     build: .
@@ -37,7 +52,7 @@ services:
       - /app/deps
       - /app/_build
     profiles:
-      - no-cache
+      - normal
 
   web_with_cache:
     container_name: web_application_app_cache
@@ -59,9 +74,30 @@ services:
     profiles:
       - cache
 
+  web_with_search:
+    container_name: web_application_app_search
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=dev
+      - DB_HOST=db
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+    depends_on:
+      - db
+      - opensearch
+    volumes:
+      - .:/app
+      - /app/deps
+      - /app/_build
+    profiles:
+      - search
+
 volumes:
   postgres_data:
   redis_data:
+  opensearch_data:
 
 networks:
   default:
