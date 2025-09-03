@@ -1,0 +1,416 @@
+<.header>
+  <div class="flex items-center gap-3">
+    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+      />
+    </svg>
+    Advanced Book Search
+  </div>
+  <:subtitle>
+    Discover books with powerful full-text search across titles, summaries, and authors
+  </:subtitle>
+</.header>
+
+<!-- Enhanced Search Form -->
+<div class="mb-8">
+  <div class="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-6 border border-primary/10">
+    <.form
+      :let={f}
+      for={%{}}
+      as={:search}
+      method="get"
+      action={~p"/books/search"}
+    >
+      <div class="flex flex-col sm:flex-row gap-4 items-end">
+        <div class="flex-1 w-full">
+          <.input
+            field={f[:q]}
+            type="text"
+            placeholder="Try 'adventure fantasy', author names, or book titles..."
+            value={@query}
+            class="w-full text-lg"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"
+              />
+            </svg>
+            Supports fuzzy matching and relevance ranking
+          </p>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <.button
+            type="submit"
+            class="btn btn-primary btn-lg flex-1 sm:flex-none shadow-lg flex items-center justify-center"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
+            </svg>
+            Search
+          </.button>
+          <%= if @query != "" do %>
+            <.link
+              href={~p"/books/search"}
+              class="btn btn-outline btn-lg shadow-md flex items-center justify-center"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Clear
+            </.link>
+          <% end %>
+        </div>
+      </div>
+    </.form>
+  </div>
+</div>
+
+<!-- Search Results Header -->
+<%= if @query != "" do %>
+  <div class="mb-6">
+    <div class="flex items-center justify-between bg-base-200 rounded-lg p-4">
+      <div class="flex items-center gap-3">
+        <%= if length(@books) > 0 do %>
+          <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          <span class="font-medium">
+            Found <span class="badge badge-success badge-lg">{@pagination.total_entries}</span>
+            result(s)
+          </span>
+        <% else %>
+          <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+            />
+          </svg>
+          <span class="font-medium text-warning">No results found</span>
+        <% end %>
+        <span class="text-gray-600">for</span>
+        <code class="bg-base-300 px-2 py-1 rounded text-sm font-mono">{@query}</code>
+      </div>
+      <%= if length(@books) > 0 do %>
+        <div class="text-xs text-gray-500">
+          <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          Sorted by relevance
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<!-- Enhanced Search Results -->
+<%= if length(@books) > 0 do %>
+  <div class="grid gap-6">
+    <%= for {book, index} <- Enum.with_index(@books) do %>
+      <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 border border-base-300">
+        <div class="card-body p-6">
+          <div class="flex justify-between items-start gap-4">
+            <div class="flex-1 min-w-0">
+              <!-- Book Title with Rank Badge -->
+              <div class="flex items-start gap-3 mb-3">
+                <div class="badge badge-primary badge-sm font-mono">
+                  #{@pagination.page_number * @pagination.page_size - @pagination.page_size +
+                    index + 1}
+                </div>
+                <div class="flex-1">
+                  <h3 class="card-title text-xl mb-1">
+                    <.link
+                      href={~p"/books/#{book}"}
+                      class="link link-hover text-primary hover:text-primary-focus"
+                    >
+                      {book.name}
+                    </.link>
+                  </h3>
+                  <div class="flex items-center gap-2 text-sm text-gray-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                      />
+                    </svg>
+                    <span>by</span>
+                    <.link href={~p"/authors/#{book.author}"} class="link link-hover font-medium">
+                      {book.author.name}
+                    </.link>
+                  </div>
+                </div>
+              </div>
+              
+<!-- Book Summary -->
+              <%= if book.summary do %>
+                <div class="bg-base-200 rounded-lg p-4 mb-4">
+                  <p class="text-sm text-gray-700 leading-relaxed line-clamp-3">
+                    {book.summary}
+                  </p>
+                </div>
+              <% end %>
+              
+<!-- Book Metadata -->
+              <div class="flex flex-wrap gap-4 text-xs">
+                <%= if book.date_of_publication do %>
+                  <div class="flex items-center gap-1 bg-info/10 text-info px-2 py-1 rounded-full">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5a2.25 2.25 0 0 0 2.25-2.25m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 9v7.5"
+                      />
+                    </svg>
+                    <span>{book.date_of_publication}</span>
+                  </div>
+                <% end %>
+                <%= if book.number_of_sales do %>
+                  <div class="flex items-center gap-1 bg-success/10 text-success px-2 py-1 rounded-full">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM12 15.75h.007v.008H12v-.008Z"
+                      />
+                    </svg>
+                    <span>
+                      {book.number_of_sales
+                      |> Integer.to_string()
+                      |> String.replace(~r/(\d)(?=(\d{3})+$)/, "\\1,")} sales
+                    </span>
+                  </div>
+                <% end %>
+              </div>
+            </div>
+            
+<!-- Action Buttons -->
+            <div class="flex flex-col gap-2 shrink-0">
+              <.link href={~p"/books/#{book}"} class="btn btn-sm btn-outline btn-primary">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                </svg>
+                View
+              </.link>
+              <.link href={~p"/books/#{book}/edit"} class="btn btn-sm btn-primary">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                  />
+                </svg>
+                Edit
+              </.link>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  
+<!-- Pagination Controls -->
+  <%= if @pagination.total_pages > 1 do %>
+    <div class="flex justify-center mt-8">
+      <.pagination
+        page={@pagination}
+        path={~p"/books/search"}
+        params={%{q: @query}}
+      />
+    </div>
+  <% end %>
+<% else %>
+  <%= if @query == "" do %>
+    <!-- Welcome State -->
+    <div class="text-center py-16">
+      <div class="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+          />
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">Discover Amazing Books</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        Use our advanced search to find books by title, author, or content.
+        Our intelligent search understands context and finds the most relevant results.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-sm">
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+            />
+          </svg>
+          <div class="font-medium">Search Titles</div>
+          <div class="text-gray-600 text-xs">Find books by name</div>
+        </div>
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.875a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"
+            />
+          </svg>
+          <div class="font-medium">Find Authors</div>
+          <div class="text-gray-600 text-xs">Search by author name</div>
+        </div>
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"
+            />
+          </svg>
+          <div class="font-medium">Content Search</div>
+          <div class="text-gray-600 text-xs">Search book summaries</div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <!-- No Results State -->
+    <div class="text-center py-16">
+      <div class="bg-gradient-to-br from-warning/10 to-error/10 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <svg class="w-12 h-12 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">No Books Found</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        We couldn't find any books matching "<strong><%= @query %></strong>".
+        Try different keywords or check your spelling.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <.link href={~p"/books/search"} class="btn btn-outline">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"
+            />
+          </svg>
+          Try New Search
+        </.link>
+        <.link href={~p"/books"} class="btn btn-primary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+            />
+          </svg>
+          Browse All Books
+        </.link>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<!-- Enhanced Footer -->
+<div class="mt-12 pt-8 border-t border-base-300">
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+    <.link href={~p"/books"} class="btn btn-outline">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7"
+        />
+      </svg>
+      Back to Books
+    </.link>
+    <div class="flex items-center gap-2 text-sm text-gray-500">
+      <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+      <span>Powered by OpenSearch</span>
+      <%= if WebApplication.Search.available?() do %>
+        <div class="badge badge-success badge-xs">Active</div>
+      <% else %>
+        <div class="badge badge-warning badge-xs">Fallback</div>
+      <% end %>
+    </div>
+  </div>
+</div>

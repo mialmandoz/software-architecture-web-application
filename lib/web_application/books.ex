@@ -6,6 +6,7 @@ defmodule WebApplication.Books do
   import Ecto.Query, warn: false
   alias WebApplication.Repo
   alias WebApplication.Cache
+  alias WebApplication.Search
 
   alias WebApplication.Books.Book
   alias WebApplication.Reviews.Review
@@ -116,6 +117,38 @@ defmodule WebApplication.Books do
   end
 
   @doc """
+  Search books using OpenSearch with fallback to database search.
+
+  ## Examples
+
+      iex> search_books("gatsby")
+      {[%Book{}, ...], %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}}
+
+  """
+  def search_books(query, opts \\ []) when is_binary(query) and query != "" do
+    case Search.search_books(query, opts) do
+      {:ok, book_ids, pagination} when is_list(book_ids) and length(book_ids) > 0 ->
+        # Get full book records in the order returned by search
+        books =
+          from(b in Book,
+            join: a in assoc(b, :author),
+            where: b.id in ^book_ids,
+            preload: [author: a]
+          )
+          |> Repo.all()
+          |> Enum.sort_by(&Enum.find_index(book_ids, fn id -> id == &1.id end))
+
+        {books, pagination}
+
+      {:ok, [], pagination} ->
+        {[], pagination}
+
+      _ ->
+        {[], %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}}
+    end
+  end
+
+  @doc """
   Gets a single book.
 
   Raises `Ecto.NoResultsError` if the Book does not exist.
@@ -150,7 +183,13 @@ defmodule WebApplication.Books do
     case %Book{}
          |> Book.changeset(attrs)
          |> Repo.insert() do
-      {:ok, _book} = result ->
+      {:ok, book} = result ->
+        # Load author association for indexing
+        book_with_author = Repo.preload(book, :author)
+
+        # Index in OpenSearch
+        Search.index_book(book_with_author)
+
         # Invalidate related caches
         Cache.delete_pattern("books_list:*")
         Cache.delete_pattern("review_scores:*")
@@ -179,7 +218,13 @@ defmodule WebApplication.Books do
     case book
          |> Book.changeset(attrs)
          |> Repo.update() do
-      {:ok, _updated_book} = result ->
+      {:ok, updated_book} = result ->
+        # Load author association for indexing
+        book_with_author = Repo.preload(updated_book, :author)
+
+        # Update in OpenSearch
+        Search.index_book(book_with_author)
+
         # Invalidate caches for this book and related lists
         Cache.delete(Cache.book_key(book.id))
         Cache.delete_pattern("books_list:*")
@@ -207,7 +252,10 @@ defmodule WebApplication.Books do
   """
   def delete_book(%Book{} = book) do
     case Repo.delete(book) do
-      {:ok, _deleted_book} = result ->
+      {:ok, deleted_book} = result ->
+        # Remove from OpenSearch
+        Search.remove_book(deleted_book.id)
+
         # Invalidate caches for this book and related lists
         Cache.delete(Cache.book_key(book.id))
         Cache.delete_pattern("books_list:*")

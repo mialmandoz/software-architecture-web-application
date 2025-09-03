@@ -4,6 +4,7 @@ defmodule WebApplicationWeb.ReviewController do
   alias WebApplication.Reviews
   alias WebApplication.Reviews.Review
   alias WebApplication.Books
+  alias WebApplication.Search
 
   def index(conn, params) do
     page = Reviews.list_reviews(params)
@@ -12,7 +13,8 @@ defmodule WebApplicationWeb.ReviewController do
     render(conn, :index,
       page: page,
       reviews: page.entries,
-      filter_book: filter_book
+      filter_book: filter_book,
+      search_available: Search.available?()
     )
   end
 
@@ -69,5 +71,38 @@ defmodule WebApplicationWeb.ReviewController do
     conn
     |> put_flash(:info, "Review deleted successfully.")
     |> redirect(to: ~p"/reviews")
+  end
+
+  def search(conn, %{"search" => %{"q" => query}, "page" => page})
+      when is_binary(query) and query != "" do
+    page = String.to_integer(page)
+    {reviews, pagination} = Reviews.search_reviews(query, page: page, per_page: 10)
+    render(conn, :search, reviews: reviews, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"search" => %{"q" => query}}) when is_binary(query) and query != "" do
+    page = String.to_integer(conn.params["page"] || "1")
+    {reviews, pagination} = Reviews.search_reviews(query, page: page, per_page: 10)
+    render(conn, :search, reviews: reviews, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"q" => query, "page" => page}) when is_binary(query) and query != "" do
+    page = String.to_integer(page)
+    {reviews, pagination} = Reviews.search_reviews(query, page: page, per_page: 10)
+    render(conn, :search, reviews: reviews, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"q" => query}) when is_binary(query) and query != "" do
+    page = String.to_integer(conn.params["page"] || "1")
+    {reviews, pagination} = Reviews.search_reviews(query, page: page, per_page: 10)
+    render(conn, :search, reviews: reviews, query: query, pagination: pagination)
+  end
+
+  def search(conn, _params) do
+    render(conn, :search,
+      reviews: [],
+      query: "",
+      pagination: %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}
+    )
   end
 end

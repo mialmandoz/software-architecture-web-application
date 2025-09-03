@@ -1,0 +1,417 @@
+<.header>
+  <div class="flex items-center gap-3">
+    <svg class="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+      />
+    </svg>
+    Advanced Review Search
+  </div>
+  <:subtitle>
+    Search through review content with intelligent matching and relevance ranking
+  </:subtitle>
+</.header>
+
+<!-- Enhanced Search Form -->
+<div class="mb-8">
+  <div class="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-xl p-6 border border-primary/10">
+    <.form
+      :let={f}
+      for={%{}}
+      as={:search}
+      method="get"
+      action={~p"/reviews/search"}
+    >
+      <div class="flex flex-col sm:flex-row gap-4 items-end">
+        <div class="flex-1 w-full">
+          <.input
+            field={f[:q]}
+            type="text"
+            placeholder="Try 'excellent story', 'disappointing ending', or specific review content..."
+            value={@query}
+            class="w-full text-lg"
+          />
+          <p class="text-xs text-gray-500 mt-1">
+            <svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456Z"
+              />
+            </svg>
+            Supports fuzzy matching and relevance ranking
+          </p>
+        </div>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <.button
+            type="submit"
+            class="btn btn-primary btn-lg flex-1 sm:flex-none shadow-lg flex items-center justify-center"
+          >
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+              />
+            </svg>
+            Search
+          </.button>
+          <%= if @query != "" do %>
+            <.link href={~p"/reviews/search"} class="btn btn-outline btn-lg">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+              Clear
+            </.link>
+          <% end %>
+        </div>
+      </div>
+    </.form>
+  </div>
+</div>
+
+<!-- Search Results Header -->
+<%= if @query != "" do %>
+  <div class="mb-6">
+    <div class="flex items-center justify-between bg-base-200 rounded-lg p-4">
+      <div class="flex items-center gap-3">
+        <%= if length(@reviews) > 0 do %>
+          <svg class="w-5 h-5 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
+            />
+          </svg>
+          <span class="font-medium">
+            Found <span class="badge badge-success badge-lg">{@pagination.total_entries}</span>
+            result(s)
+          </span>
+        <% else %>
+          <svg class="w-5 h-5 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
+            />
+          </svg>
+          <span class="font-medium text-warning">No results found</span>
+        <% end %>
+        <span class="text-gray-600">for</span>
+        <code class="bg-base-300 px-2 py-1 rounded text-sm font-mono">{@query}</code>
+      </div>
+      <%= if length(@reviews) > 0 do %>
+        <div class="flex items-center gap-2 text-sm text-gray-600">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2-2z"
+            />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="m8 10 4 4 4-4"
+            />
+          </svg>
+          Sorted by relevance
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<!-- Enhanced Search Results -->
+<%= if length(@reviews) > 0 do %>
+  <div class="grid gap-6">
+    <%= for {review, index} <- Enum.with_index(@reviews) do %>
+      <div class="card bg-base-100 shadow-lg hover:shadow-xl transition-all duration-200 border border-base-300">
+        <div class="card-body p-6">
+          <div class="flex justify-between items-start gap-4">
+            <div class="flex-1 min-w-0">
+              <!-- Review Title with Rank Badge -->
+              <div class="flex items-start gap-3 mb-3">
+                <div class="badge badge-primary badge-sm font-mono">
+                  #{(@pagination.page_number - 1) * @pagination.page_size + index + 1}
+                </div>
+                <div class="flex-1">
+                  <h3 class="card-title text-xl mb-1">
+                    <.link
+                      href={~p"/reviews/#{review}"}
+                      class="link link-hover text-primary hover:text-primary-focus"
+                    >
+                      Review of "{review.book.name}"
+                    </.link>
+                  </h3>
+                  <div class="flex items-center gap-2 text-sm text-gray-600 mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                      />
+                    </svg>
+                    <span>by</span>
+                    <.link
+                      href={~p"/authors/#{review.book.author}"}
+                      class="link link-hover font-medium"
+                    >
+                      {review.book.author.name}
+                    </.link>
+                  </div>
+                  <!-- Rating -->
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="text-yellow-500 text-lg">
+                      {String.duplicate("⭐", review.score)}
+                    </span>
+                    <span class="text-sm text-gray-600">({review.score}/5 stars)</span>
+                  </div>
+                </div>
+              </div>
+              
+<!-- Review Content -->
+              <div class="bg-base-200 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-700 leading-relaxed">
+                  <%= if String.length(review.review) > 300 do %>
+                    {String.slice(review.review, 0, 300)}...
+                  <% else %>
+                    {review.review}
+                  <% end %>
+                </p>
+              </div>
+              
+<!-- Review Stats -->
+              <div class="flex items-center gap-4 text-sm text-gray-600">
+                <div class="flex items-center gap-1">
+                  <span>👍</span>
+                  <span>{review.number_of_upvotes} upvotes</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>{Calendar.strftime(review.inserted_at, "%B %d, %Y")}</span>
+                </div>
+              </div>
+            </div>
+            
+<!-- Action Buttons -->
+            <div class="flex flex-col gap-2 min-w-0">
+              <.link href={~p"/reviews/#{review}"} class="btn btn-sm btn-outline">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                  />
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                  />
+                </svg>
+                View
+              </.link>
+              <.link href={~p"/reviews/#{review}/edit"} class="btn btn-sm btn-primary">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                  />
+                </svg>
+                Edit
+              </.link>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  </div>
+  
+<!-- Pagination Controls -->
+  <%= if @pagination.total_pages > 1 do %>
+    <div class="flex justify-center mt-8">
+      <.pagination
+        page={@pagination}
+        path={~p"/reviews/search"}
+        params={%{q: @query}}
+      />
+    </div>
+  <% end %>
+<% else %>
+  <%= if @query == "" do %>
+    <!-- Welcome State -->
+    <div class="text-center py-16">
+      <div class="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">Discover Amazing Reviews</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        Use our advanced search to find reviews by content, sentiment, or specific topics.
+        Our intelligent search understands context and finds the most relevant reviews.
+      </p>
+      
+<!-- Search Tips -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-2xl mx-auto">
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-1.586l-4 4z"
+            />
+          </svg>
+          <div class="font-medium">Search Content</div>
+          <div class="text-gray-600 text-xs">Find reviews by specific words or phrases</div>
+        </div>
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            />
+          </svg>
+          <div class="font-medium">Find Ratings</div>
+          <div class="text-gray-600 text-xs">Search by sentiment and rating quality</div>
+        </div>
+        <div class="bg-base-200 rounded-lg p-4">
+          <svg
+            class="w-6 h-6 text-primary mx-auto mb-2"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"
+            />
+          </svg>
+          <div class="font-medium">Book Context</div>
+          <div class="text-gray-600 text-xs">Reviews include book and author information</div>
+        </div>
+      </div>
+    </div>
+  <% else %>
+    <!-- No Results State -->
+    <div class="text-center py-16">
+      <div class="bg-gradient-to-br from-warning/10 to-error/10 rounded-full w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+        <svg class="w-12 h-12 text-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-3">No Reviews Found</h3>
+      <p class="text-gray-600 mb-6 max-w-md mx-auto">
+        We couldn't find any reviews matching "<strong><%= @query %></strong>".
+        Try different keywords or check your spelling.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-3 justify-center">
+        <.link href={~p"/reviews/search"} class="btn btn-outline">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"
+            />
+          </svg>
+          Try New Search
+        </.link>
+        <.link href={~p"/reviews"} class="btn btn-primary">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+            />
+          </svg>
+          Browse All Reviews
+        </.link>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+
+<!-- Enhanced Footer -->
+<div class="mt-12 pt-8 border-t border-base-300">
+  <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+    <.link href={~p"/reviews"} class="btn btn-outline">
+      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M10 19l-7-7m0 0l7-7"
+        />
+      </svg>
+      Back to Reviews
+    </.link>
+    <div class="flex items-center gap-2 text-sm text-gray-500">
+      <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M13 10V3L4 14h7v7l9-11h-7z"
+        />
+      </svg>
+      <span>Powered by OpenSearch</span>
+      <%= if WebApplication.Search.available?() do %>
+        <div class="badge badge-success badge-xs">Active</div>
+      <% else %>
+        <div class="badge badge-warning badge-xs">Fallback</div>
+      <% end %>
+    </div>
+  </div>
+</div>

@@ -6,53 +6,72 @@ defmodule WebApplication.Reviews do
   import Ecto.Query, warn: false
   alias WebApplication.Repo
   alias WebApplication.Cache
+  alias WebApplication.Search
 
   alias WebApplication.Reviews.Review
 
   @doc """
-  Returns a paginated list of reviews, optionally filtered by book name.
+  Returns the list of reviews with pagination and optional filters.
 
   ## Examples
 
       iex> list_reviews()
-      %Scrivener.Page{entries: [%Review{}, ...], ...}
-
-      iex> list_reviews(%{"filter_book" => "Harry Potter", "page" => "2"})
-      %Scrivener.Page{entries: [%Review{}, ...], ...}
+      %Scrivener.Page{entries: [%Review{}, ...]}
 
   """
   def list_reviews(params \\ %{}) do
-    page = Map.get(params, "page", "1") |> String.to_integer()
-    filter_book = Map.get(params, "filter_book")
+    filter_book = Map.get(params, "filter_book", "")
+    page = String.to_integer(Map.get(params, "page", "1"))
 
-    cache_key = Cache.reviews_list_key(%{filter_book: filter_book, page: page})
+    query =
+      from(r in Review,
+        join: b in assoc(r, :book),
+        join: a in assoc(b, :author),
+        preload: [book: {b, :author}],
+        order_by: [desc: r.inserted_at]
+      )
 
-    case Cache.get(cache_key) do
-      {:ok, nil} ->
-        query = from(r in Review, join: b in assoc(r, :book), preload: :book)
+    query =
+      if filter_book != "" do
+        from([r, b, a] in query, where: ilike(b.name, ^"%#{filter_book}%"))
+      else
+        query
+      end
 
-        query =
-          case filter_book do
-            nil ->
-              query
+    Repo.paginate(query, page: page, page_size: 10)
+  end
 
-            "" ->
-              query
+  @doc """
+  Search reviews by content with OpenSearch or fallback to database.
+  Returns paginated results.
 
-            book_name ->
-              from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
-          end
+  ## Examples
 
-        # Order by review ID for consistent pagination
-        query = from [r, b] in query, order_by: [desc: r.id]
+      iex> search_reviews("great book")
+      {[%Review{}, ...], %{page_number: 1, page_size: 10, total_entries: 5, total_pages: 1}}
 
-        result = Repo.paginate(query, page: page, page_size: 10)
-        # 5 minutes in milliseconds
-        Cache.put(cache_key, result, 300_000)
-        result
+  """
+  def search_reviews(query, opts \\ []) when is_binary(query) and query != "" do
+    case Search.search_reviews(query, opts) do
+      {:ok, review_ids, pagination} when is_list(review_ids) and length(review_ids) > 0 ->
+        # Get full review records in the order returned by search
+        reviews =
+          from(r in Review,
+            join: b in assoc(r, :book),
+            join: a in assoc(b, :author),
+            where: r.id in ^review_ids,
+            preload: [book: {b, :author}]
+          )
+          |> Repo.all()
+          |> Enum.sort_by(&Enum.find_index(review_ids, fn id -> id == &1.id end))
 
-      {:ok, cached_result} ->
-        cached_result
+        {reviews, pagination}
+
+      {:ok, [], pagination} ->
+        {[], pagination}
+
+      _ ->
+        {[], %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}}
     end
   end
 
@@ -92,6 +111,12 @@ defmodule WebApplication.Reviews do
          |> Review.changeset(attrs)
          |> Repo.insert() do
       {:ok, review} = result ->
+        # Load book and author associations for indexing
+        review_with_book = Repo.preload(review, book: :author)
+
+        # Index in OpenSearch
+        Search.index_review(review_with_book)
+
         # Invalidate related caches
         Cache.delete_pattern("reviews_list:*")
         Cache.delete_pattern("review_scores:#{review.book_id}")
@@ -119,7 +144,13 @@ defmodule WebApplication.Reviews do
     case review
          |> Review.changeset(attrs)
          |> Repo.update() do
-      {:ok, _updated_review} = result ->
+      {:ok, updated_review} = result ->
+        # Load book and author associations for indexing
+        review_with_book = Repo.preload(updated_review, book: :author)
+
+        # Update in OpenSearch
+        Search.index_review(review_with_book)
+
         # Invalidate related caches
         Cache.delete(Cache.review_key(review.id))
         Cache.delete_pattern("reviews_list:*")
@@ -146,7 +177,10 @@ defmodule WebApplication.Reviews do
   """
   def delete_review(%Review{} = review) do
     case Repo.delete(review) do
-      {:ok, _deleted_review} = result ->
+      {:ok, deleted_review} = result ->
+        # Remove from OpenSearch
+        Search.remove_review(deleted_review.id)
+
         # Invalidate related caches
         Cache.delete(Cache.review_key(review.id))
         Cache.delete_pattern("reviews_list:*")

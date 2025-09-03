@@ -4,6 +4,7 @@ defmodule WebApplicationWeb.BookController do
   alias WebApplication.Books
   alias WebApplication.Books.Book
   alias WebApplication.Authors
+  alias WebApplication.Search
 
   def index(conn, params) do
     page = Books.list_books(params)
@@ -16,7 +17,41 @@ defmodule WebApplicationWeb.BookController do
       books: page.entries,
       filter_name: filter_name,
       filter_author: filter_author,
-      filter_summary: filter_summary
+      filter_summary: filter_summary,
+      search_available: Search.available?()
+    )
+  end
+
+  def search(conn, %{"search" => %{"q" => query}, "page" => page})
+      when is_binary(query) and query != "" do
+    page = String.to_integer(page)
+    {books, pagination} = Books.search_books(query, page: page, per_page: 10)
+    render(conn, :search, books: books, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"search" => %{"q" => query}}) when is_binary(query) and query != "" do
+    page = String.to_integer(conn.params["page"] || "1")
+    {books, pagination} = Books.search_books(query, page: page, per_page: 10)
+    render(conn, :search, books: books, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"q" => query, "page" => page}) when is_binary(query) and query != "" do
+    page = String.to_integer(page)
+    {books, pagination} = Books.search_books(query, page: page, per_page: 10)
+    render(conn, :search, books: books, query: query, pagination: pagination)
+  end
+
+  def search(conn, %{"q" => query}) when is_binary(query) and query != "" do
+    page = String.to_integer(conn.params["page"] || "1")
+    {books, pagination} = Books.search_books(query, page: page, per_page: 10)
+    render(conn, :search, books: books, query: query, pagination: pagination)
+  end
+
+  def search(conn, _params) do
+    render(conn, :search,
+      books: [],
+      query: "",
+      pagination: %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}
     )
   end
 

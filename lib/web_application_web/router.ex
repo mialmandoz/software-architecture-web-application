@@ -18,11 +18,13 @@ defmodule WebApplicationWeb.Router do
     pipe_through :browser
 
     get "/", PageController, :home
+    get "/books/search", BookController, :search
     get "/books/top-rated", BookController, :top_rated
     get "/books/top-selling", BookController, :top_selling
     resources "/books", BookController
     get "/authors/statistics", AuthorController, :statistics
     resources "/authors", AuthorController
+    get "/reviews/search", ReviewController, :search
     resources "/reviews", ReviewController
     resources "/sales", SaleController
   end

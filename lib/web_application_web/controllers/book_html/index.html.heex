@@ -9,6 +9,11 @@
   <.link href={~p"/books/new"}>
     <.button class="btn btn-success btn-lg">✍️ New Book</.button>
   </.link>
+  <%= if @search_available do %>
+    <.link href={~p"/books/search"}>
+      <.button class="btn btn-info btn-lg">🔍 Advanced Search</.button>
+    </.link>
+  <% end %>
   <.link href={~p"/books/top-rated"}>
     <.button class="btn btn-warning btn-lg">
       🏆 Top 10 Rated Books
@@ -54,7 +59,7 @@
       <.input
         field={f[:filter_summary]}
         type="text"
-        placeholder="Search book summaries..."
+        placeholder="Filter by book summary..."
         value={@filter_summary}
         name="filter_summary"
         class="w-full text-lg px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:ring-2 focus:ring-blue-200"

@@ -40,18 +40,21 @@ sudo usermod -aG docker $USER
 git clone https://github.com/mialmandoz/software-architecture-web-application
 cd software-architecture-web-application
 
-# Build and start the application with Docker (without Redis caching)
-docker-compose --profile no-cache up --build
+# Build and start the application with Docker (vanilla version)
+docker-compose --profile normal up --build
 
 # Build and start the application with Docker (with Redis caching)
 docker-compose --profile cache up --build
+
+# Build and start the application with Docker (with OpenSearch for advanced search)
+docker-compose --profile search up --build
 ```
 
 The application will be available at: **http://localhost:4000**
 
 ### Cache Behavior
 
-**Without Redis (`--profile no-cache`):**
+**Without Redis (`--profile normal`):**
 
 - Uses direct database queries
 - No cache messages in logs
@@ -103,6 +106,7 @@ web_application/
 │   │   ├── repo.ex               # Ecto repository
 │   │   ├── mailer.ex             # Email configuration
 │   │   ├── cache.ex              # Redis/In-memory cache module
+│   │   ├── search.ex             # OpenSearch integration for full-text search
 │   │   ├── data_generator.ex     # Test data generator
 │   │   ├── authors/              # Authors context
 │   │   │   └── author.ex         # Schema and validations
@@ -133,6 +137,7 @@ web_application/
 │   │   │   ├── book_controller.ex      # Books CRUD
 │   │   │   ├── book_html/              # Books HTML views
 │   │   │   │   ├── index.html.heex     # List with filters and pagination
+│   │   │   │   ├── search.html.heex    # Advanced search interface
 │   │   │   │   ├── show.html.heex      # Book detail
 │   │   │   │   ├── new.html.heex       # Create book
 │   │   │   │   ├── edit.html.heex      # Edit book
@@ -141,6 +146,7 @@ web_application/
 │   │   │   ├── review_controller.ex    # Reviews CRUD
 │   │   │   ├── review_html/            # Reviews HTML views
 │   │   │   │   ├── index.html.heex     # List with pagination
+│   │   │   │   ├── search.html.heex    # Advanced search interface
 │   │   │   │   ├── show.html.heex      # Review detail
 │   │   │   │   ├── new.html.heex       # Create review
 │   │   │   │   ├── edit.html.heex      # Edit review
@@ -214,13 +220,14 @@ web_application/
 ├── mix.exs                          # Project dependencies and configuration
 ├── mix.lock                         # Exact dependency versions
 └── start.sh                         # Docker startup script
-````
+```
 
 ### Cache Implementation
 
 The application includes a sophisticated caching system with Redis support:
 
 **Cache Module (`lib/web_application/cache.ex`):**
+
 - **Automatic fallback:** Uses Redis when available, falls back to no-cache mode when Redis is disabled
 - **Environment detection:** Automatically detects Redis availability via `REDIS_HOST` environment variable
 - **Cache operations:** Supports get, put, delete, pattern deletion, and statistics
@@ -228,19 +235,47 @@ The application includes a sophisticated caching system with Redis support:
 - **Logging:** Comprehensive cache operation logging with emojis for easy debugging
 
 **Dependencies:**
+
 - **Cachex:** In-memory caching library for Elixir
 - **Redix:** Redis client for Elixir
 
 **Docker Profiles:**
-- **`no-cache` profile:** Runs without Redis (direct database queries)
+
+- **`normal` profile:** Runs without Redis (direct database queries)
 - **`cache` profile:** Includes Redis service for caching
 
 **Cached Data:**
+
 - Book lists and individual books (2-hour TTL)
 - Author lists and statistics (30-minute TTL)
 - Review lists and scores
 - Top-rated and best-selling book statistics
 - Automatic cache invalidation on data modifications
+
+### Search Implementation
+
+The application includes an advanced search feature with OpenSearch integration:
+
+**Search Module (`lib/web_application/search.ex`):**
+
+- **Fallback:** Uses database search when OpenSearch is unavailable
+- **Environment detection:** Automatically detects OpenSearch availability via `OPENSEARCH_HOST` environment variable
+- **Search operations:** Supports book and review search with pagination and fuzzy matching
+- **Logging:** Comprehensive search operation logging with emojis for easy debugging
+
+**Dependencies:**
+
+- **Req:** HTTP client for Elixir
+
+**Docker Profiles:**
+
+- **`normal` profile:** Runs without OpenSearch (direct database queries)
+- **`search` profile:** Includes OpenSearch service for search
+
+**Search Data:**
+
+- Book search results (10 items per page)
+- Review search results (10 items per page)
 
 ---
 
@@ -263,4 +298,3 @@ The application includes a sophisticated caching system with Redis support:
 - **Modern interface** with DaisyUI and Tailwind CSS
 - **Reusable components** for pagination and forms
 - **Docker containerization** with automatic database setup and data persistence
-
