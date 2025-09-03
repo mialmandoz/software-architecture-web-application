@@ -228,8 +228,10 @@ defmodule WebApplication.Search do
   end
 
   defp opensearch_search_reviews(query, opts) do
-    size = Keyword.get(opts, :size, 20)
-    from = Keyword.get(opts, :from, 0)
+    page = Keyword.get(opts, :page, 1)
+    per_page = Keyword.get(opts, :per_page, 10)
+    size = per_page
+    from = (page - 1) * per_page
 
     search_body = %{
       query: %{
@@ -237,7 +239,7 @@ defmodule WebApplication.Search do
           query: query,
           fields: ["content^2", "book_title", "author_name"],
           type: "best_fields",
-          fuzziness: "AUTO"
+          fuzziness: 1
         }
       },
       size: size,
@@ -246,9 +248,17 @@ defmodule WebApplication.Search do
     }
 
     case Req.post("#{@base_url}/#{@reviews_index}/_search", json: search_body) do
-      {:ok, %{status: 200, body: %{"hits" => %{"hits" => hits}}}} ->
+      {:ok, %{status: 200, body: %{"hits" => %{"hits" => hits, "total" => %{"value" => total}}}}} ->
         review_ids = Enum.map(hits, fn hit -> hit["_source"]["id"] end)
-        {:ok, review_ids}
+
+        pagination = %{
+          page_number: page,
+          page_size: per_page,
+          total_entries: total,
+          total_pages: ceil(total / per_page)
+        }
+
+        {:ok, review_ids, pagination}
 
       {:error, reason} ->
         Logger.warning("OpenSearch reviews search failed: #{inspect(reason)}")

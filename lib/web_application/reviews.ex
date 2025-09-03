@@ -11,64 +11,49 @@ defmodule WebApplication.Reviews do
   alias WebApplication.Reviews.Review
 
   @doc """
-  Returns a paginated list of reviews, optionally filtered by book name.
+  Returns the list of reviews with pagination and optional filters.
 
   ## Examples
 
       iex> list_reviews()
-      %Scrivener.Page{entries: [%Review{}, ...], ...}
-
-      iex> list_reviews(%{"filter_book" => "Harry Potter", "page" => "2"})
-      %Scrivener.Page{entries: [%Review{}, ...], ...}
+      %Scrivener.Page{entries: [%Review{}, ...]}
 
   """
   def list_reviews(params \\ %{}) do
-    page = Map.get(params, "page", "1") |> String.to_integer()
-    filter_book = Map.get(params, "filter_book")
+    filter_book = Map.get(params, "filter_book", "")
+    page = String.to_integer(Map.get(params, "page", "1"))
 
-    cache_key = Cache.reviews_list_key(%{filter_book: filter_book, page: page})
+    query =
+      from(r in Review,
+        join: b in assoc(r, :book),
+        join: a in assoc(b, :author),
+        preload: [book: {b, :author}],
+        order_by: [desc: r.inserted_at]
+      )
 
-    case Cache.get(cache_key) do
-      {:ok, nil} ->
-        query = from(r in Review, join: b in assoc(r, :book), preload: :book)
+    query =
+      if filter_book != "" do
+        from([r, b, a] in query, where: ilike(b.name, ^"%#{filter_book}%"))
+      else
+        query
+      end
 
-        query =
-          case filter_book do
-            nil ->
-              query
-
-            "" ->
-              query
-
-            book_name ->
-              from([r, b] in query, where: ilike(b.name, ^"%#{book_name}%"))
-          end
-
-        # Order by review ID for consistent pagination
-        query = from [r, b] in query, order_by: [desc: r.id]
-
-        result = Repo.paginate(query, page: page, page_size: 10)
-        # 5 minutes in milliseconds
-        Cache.put(cache_key, result, 300_000)
-        result
-
-      {:ok, cached_result} ->
-        cached_result
-    end
+    Repo.paginate(query, page: page, page_size: 10)
   end
 
   @doc """
-  Search reviews using OpenSearch with fallback to database search.
+  Search reviews by content with OpenSearch or fallback to database.
+  Returns paginated results.
 
   ## Examples
 
-      iex> search_reviews("excellent book")
-      [%Review{}, ...]
+      iex> search_reviews("great book")
+      {[%Review{}, ...], %{page_number: 1, page_size: 10, total_entries: 5, total_pages: 1}}
 
   """
   def search_reviews(query, opts \\ []) when is_binary(query) and query != "" do
     case Search.search_reviews(query, opts) do
-      {:ok, review_ids} when is_list(review_ids) and length(review_ids) > 0 ->
+      {:ok, review_ids, pagination} when is_list(review_ids) and length(review_ids) > 0 ->
         # Get full review records in the order returned by search
         reviews =
           from(r in Review,
@@ -80,10 +65,13 @@ defmodule WebApplication.Reviews do
           |> Repo.all()
           |> Enum.sort_by(&Enum.find_index(review_ids, fn id -> id == &1.id end))
 
-        reviews
+        {reviews, pagination}
+
+      {:ok, [], pagination} ->
+        {[], pagination}
 
       _ ->
-        []
+        {[], %{page_number: 1, page_size: 10, total_entries: 0, total_pages: 0}}
     end
   end
 

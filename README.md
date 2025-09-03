@@ -40,7 +40,7 @@ sudo usermod -aG docker $USER
 git clone https://github.com/mialmandoz/software-architecture-web-application
 cd software-architecture-web-application
 
-# Build and start the application with Docker (without Redis caching)
+# Build and start the application with Docker (vanilla version)
 docker-compose --profile normal up --build
 
 # Build and start the application with Docker (with Redis caching)
@@ -146,6 +146,7 @@ web_application/
 │   │   │   ├── review_controller.ex    # Reviews CRUD
 │   │   │   ├── review_html/            # Reviews HTML views
 │   │   │   │   ├── index.html.heex     # List with pagination
+│   │   │   │   ├── search.html.heex    # Advanced search interface
 │   │   │   │   ├── show.html.heex      # Review detail
 │   │   │   │   ├── new.html.heex       # Create review
 │   │   │   │   ├── edit.html.heex      # Edit review
@@ -274,6 +275,7 @@ The application includes an advanced search feature with OpenSearch integration:
 **Search Data:**
 
 - Book search results (10 items per page)
+- Review search results (10 items per page)
 
 ---
 
