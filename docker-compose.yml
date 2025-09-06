@@ -1,6 +1,6 @@
 services:
   db:
-    container_name: web_application_db 
+    container_name: web_application_db
     image: postgres:14
     environment:
       POSTGRES_DB: web_application_dev
@@ -94,11 +94,86 @@ services:
     profiles:
       - search
 
+  # --- App con Cache + Search (para el modo "ALL") ---
+  web_with_cache_search:
+    container_name: web_application_app_cache_search
+    build: .
+    ports:
+      - "4000:4000"
+    environment:
+      - MIX_ENV=dev
+      - DB_HOST=db
+      # Search
+      - OPENSEARCH_HOST=opensearch
+      - OPENSEARCH_PORT=9200
+      # Cache
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - opensearch
+      - redis
+    volumes:
+      - .:/app
+      - /app/deps
+      - /app/_build
+    profiles:
+      - cache
+      - search
+
+  # --- Reverse Proxy (modo: App + DB + Proxy) ---
+  nginx_app:
+    image: nginx:alpine
+    container_name: web_application_nginx_app
+    environment:
+      # En “all” servimos la app que usa cache + search
+      UPSTREAM: web:4000
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+    ports:
+      - "80:80"         
+    depends_on:
+      - web
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:80 >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    profiles:
+      - reverse-app
+
+  # --- Reverse Proxy (modo: Todo junto = App + DB + Proxy + Cache + Search) ---
+  nginx_all:
+    image: nginx:alpine
+    container_name: web_application_nginx_all
+    environment:
+      # En “all” servimos la app que usa cache + search
+      UPSTREAM: web_with_cache_search:4000
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+    ports:
+      - "80:80"           
+    depends_on:
+      - web_with_cache_search
+      - redis
+      - opensearch
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:80 >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    profiles:
+      - reverse-all
+
 volumes:
   postgres_data:
   redis_data:
   opensearch_data:
 
 networks:
-  default:
+  web_application_network:
     name: web_application_network
