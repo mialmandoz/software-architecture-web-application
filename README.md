@@ -40,7 +40,10 @@ sudo usermod -aG docker $USER
 git clone https://github.com/mialmandoz/software-architecture-web-application
 cd software-architecture-web-application
 
-# Build and start the application with Docker (vanilla version)
+# It's recommended to delete all previous containers and volumes before building the new ones
+docker-compose down -v --remove-orphans
+
+# Build and start the application with Docker (basic version)
 docker-compose --profile normal up --build
 
 # Build and start the application with Docker (with Redis caching)
@@ -48,9 +51,18 @@ docker-compose --profile cache up --build
 
 # Build and start the application with Docker (with OpenSearch for advanced search)
 docker-compose --profile search up --build
+
+# Build and start the application with Docker (with Nginx reverse proxy)
+docker-compose --profile normal --profile nginx up --build
+
+# Build and start the application with Docker (with all features: Nginx + Redis + OpenSearch)
+docker-compose --profile all up --build
 ```
 
-The application will be available at: **http://localhost:4000**
+The application will be available at:
+
+- **Direct access:** http://localhost:4000 (when using profiles without nginx)
+- **Through Nginx:** http://localhost:80 (when using nginx or all profiles)
 
 ### Cache Behavior
 
@@ -211,6 +223,9 @@ web_application/
 │   ├── web_application_web/         # Web tests
 │   │   └── controllers/             # Controller tests
 │   └── test_helper.exs              # Test configuration
+├── nginx/                           # Nginx configuration
+│   └── templates/                   # Nginx template files
+│       └── default.conf.template    # Reverse proxy configuration
 ├── .formatter.exs                   # Formatter configuration
 ├── .gitignore                       # Files ignored by Git
 ├── AGENTS.md                        # Agents documentation
@@ -298,3 +313,7 @@ The application includes an advanced search feature with OpenSearch integration:
 - **Modern interface** with DaisyUI and Tailwind CSS
 - **Reusable components** for pagination and forms
 - **Docker containerization** with automatic database setup and data persistence
+- **Docker profiles** for different configurations (normal, cache, search, all)
+- **Cache** with Redis for improved performance
+- **Search** with OpenSearch for advanced search
+- **Nginx** for reverse proxy and load balancing

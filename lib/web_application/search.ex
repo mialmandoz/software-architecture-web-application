@@ -209,17 +209,28 @@ defmodule WebApplication.Search do
     }
 
     case Req.post("#{@base_url}/#{@books_index}/_search", json: search_body) do
-      {:ok, %{status: 200, body: %{"hits" => %{"hits" => hits, "total" => %{"value" => total}}}}} ->
-        book_ids = Enum.map(hits, fn hit -> hit["_source"]["id"] end)
+      {:ok, %{status: 200, body: body}} ->
+        case body do
+          %{"hits" => %{"hits" => hits, "total" => %{"value" => total}}} ->
+            book_ids = Enum.map(hits, fn hit -> hit["_source"]["id"] end)
 
-        pagination = %{
-          page_number: page,
-          page_size: per_page,
-          total_entries: total,
-          total_pages: ceil(total / per_page)
-        }
+            pagination = %{
+              page_number: page,
+              page_size: per_page,
+              total_entries: total,
+              total_pages: ceil(total / per_page)
+            }
 
-        {:ok, book_ids, pagination}
+            {:ok, book_ids, pagination}
+
+          _ ->
+            Logger.warning("OpenSearch returned unexpected response format: #{inspect(body)}")
+            database_search_books(query, opts)
+        end
+
+      {:ok, %{status: status, body: body}} ->
+        Logger.warning("OpenSearch returned status #{status}: #{inspect(body)}")
+        database_search_books(query, opts)
 
       {:error, reason} ->
         Logger.warning("OpenSearch books search failed: #{inspect(reason)}")
@@ -248,17 +259,28 @@ defmodule WebApplication.Search do
     }
 
     case Req.post("#{@base_url}/#{@reviews_index}/_search", json: search_body) do
-      {:ok, %{status: 200, body: %{"hits" => %{"hits" => hits, "total" => %{"value" => total}}}}} ->
-        review_ids = Enum.map(hits, fn hit -> hit["_source"]["id"] end)
+      {:ok, %{status: 200, body: body}} ->
+        case body do
+          %{"hits" => %{"hits" => hits, "total" => %{"value" => total}}} ->
+            review_ids = Enum.map(hits, fn hit -> hit["_source"]["id"] end)
 
-        pagination = %{
-          page_number: page,
-          page_size: per_page,
-          total_entries: total,
-          total_pages: ceil(total / per_page)
-        }
+            pagination = %{
+              page_number: page,
+              page_size: per_page,
+              total_entries: total,
+              total_pages: ceil(total / per_page)
+            }
 
-        {:ok, review_ids, pagination}
+            {:ok, review_ids, pagination}
+
+          _ ->
+            Logger.warning("OpenSearch returned unexpected response format: #{inspect(body)}")
+            database_search_reviews(query, opts)
+        end
+
+      {:ok, %{status: status, body: body}} ->
+        Logger.warning("OpenSearch returned status #{status}: #{inspect(body)}")
+        database_search_reviews(query, opts)
 
       {:error, reason} ->
         Logger.warning("OpenSearch reviews search failed: #{inspect(reason)}")
