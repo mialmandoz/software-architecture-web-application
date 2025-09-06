@@ -50,6 +50,8 @@ services:
     environment:
       - MIX_ENV=dev
       - DB_HOST=db
+      - UPLOADS_PATH=${UPLOADS_PATH:-priv/static/uploads}
+      - SERVE_STATIC_ASSETS=${SERVE_STATIC_ASSETS:-true}
     depends_on:
       - db
     volumes:
@@ -71,6 +73,8 @@ services:
       - DB_HOST=db
       - REDIS_HOST=redis
       - REDIS_PORT=6379
+      - UPLOADS_PATH=${UPLOADS_PATH:-priv/static/uploads}
+      - SERVE_STATIC_ASSETS=${SERVE_STATIC_ASSETS:-true}
     depends_on:
       - db
       - redis
@@ -92,6 +96,8 @@ services:
       - DB_HOST=db
       - OPENSEARCH_HOST=opensearch
       - OPENSEARCH_PORT=9200
+      - UPLOADS_PATH=${UPLOADS_PATH:-priv/static/uploads}
+      - SERVE_STATIC_ASSETS=${SERVE_STATIC_ASSETS:-true}
     depends_on:
       - db
       - opensearch
@@ -108,7 +114,9 @@ services:
     image: nginx:alpine
     container_name: web_application_nginx_app
     environment:
-      UPSTREAM: web:4000
+      - UPSTREAM=web:4000
+      - UPLOADS_PATH=${UPLOADS_PATH:-priv/static/uploads}
+      - SERVE_STATIC_ASSETS=${SERVE_STATIC_ASSETS:-true}
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
     ports:
@@ -130,7 +138,9 @@ services:
     image: nginx:alpine
     container_name: web_application_nginx_all
     environment:
-      UPSTREAM: web_with_search:4000
+      - UPSTREAM=web_with_search:4000
+      - UPLOADS_PATH=${UPLOADS_PATH:-priv/static/uploads}
+      - SERVE_STATIC_ASSETS=${SERVE_STATIC_ASSETS:-true}
     volumes:
       - ./nginx/templates:/etc/nginx/templates:ro
     ports:

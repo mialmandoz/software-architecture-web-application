@@ -57,6 +57,19 @@
 </div>
 
 <.table id="authors" rows={@authors} row_click={&JS.navigate(~p"/authors/#{&1}")}>
+  <:col :let={author} label="Photo">
+    <%= if author.profile_image_url do %>
+      <img
+        src={author.profile_image_url}
+        alt="Profile of {author.name}"
+        class="w-12 h-12 object-cover rounded-full border border-gray-300"
+      />
+    <% else %>
+      <div class="w-12 h-12 bg-gray-200 rounded-full border border-gray-300 flex items-center justify-center">
+        <span class="text-gray-500 text-xs">👤</span>
+      </div>
+    <% end %>
+  </:col>
   <:col :let={author} label="Name">{author.name}</:col>
   <:col :let={author} label="Country">{author.country_of_origin}</:col>
   <:col :let={author} label="Date of Birth">

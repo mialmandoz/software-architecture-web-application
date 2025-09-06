@@ -77,6 +77,19 @@
 </div>
 
 <.table id="books" rows={@books} row_click={&JS.navigate(~p"/books/#{&1}")}>
+  <:col :let={book} label="Cover">
+    <%= if book.cover_image_url do %>
+      <img
+        src={book.cover_image_url}
+        alt="Cover of {book.name}"
+        class="w-12 h-16 object-cover rounded border border-gray-300"
+      />
+    <% else %>
+      <div class="w-12 h-16 bg-gray-200 rounded border border-gray-300 flex items-center justify-center">
+        <span class="text-gray-500 text-xs">📖</span>
+      </div>
+    <% end %>
+  </:col>
   <:col :let={book} label="Name">{book.name}</:col>
   <:col :let={book} label="Author">
     {if book.author, do: book.author.name, else: "Unknown"}

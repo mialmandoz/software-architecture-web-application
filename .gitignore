@@ -163,3 +163,6 @@ benchmarks/
 # Releases
 /releases/
 *.tar.gz
+
+# Pictures
+priv/static/uploads

@@ -7,6 +7,7 @@ defmodule WebApplication.Authors.Author do
     field :date_of_birth, :date
     field :country_of_origin, :string
     field :short_description, :string
+    field :profile_image_url, :string
 
     has_many :books, WebApplication.Books.Book
 
@@ -16,7 +17,13 @@ defmodule WebApplication.Authors.Author do
   @doc false
   def changeset(author, attrs) do
     author
-    |> cast(attrs, [:name, :date_of_birth, :country_of_origin, :short_description])
+    |> cast(attrs, [
+      :name,
+      :date_of_birth,
+      :country_of_origin,
+      :short_description,
+      :profile_image_url
+    ])
     |> validate_required([:name])
     |> validate_length(:name, min: 1, max: 255)
     |> validate_length(:country_of_origin, max: 100)

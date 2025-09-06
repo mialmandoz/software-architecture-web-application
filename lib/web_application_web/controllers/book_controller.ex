@@ -5,6 +5,7 @@ defmodule WebApplicationWeb.BookController do
   alias WebApplication.Books.Book
   alias WebApplication.Authors
   alias WebApplication.Search
+  alias WebApplication.FileUpload
 
   def index(conn, params) do
     page = Books.list_books(params)
@@ -77,7 +78,9 @@ defmodule WebApplicationWeb.BookController do
   end
 
   def create(conn, %{"book" => book_params}) do
-    case Books.create_book(book_params) do
+    book_params_with_image = handle_cover_image_upload(book_params)
+
+    case Books.create_book(book_params_with_image) do
       {:ok, book} ->
         conn
         |> put_flash(:info, "Book created successfully.")
@@ -98,8 +101,9 @@ defmodule WebApplicationWeb.BookController do
 
   def update(conn, %{"id" => id, "book" => book_params}) do
     book = Books.get_book!(id)
+    book_params_with_image = handle_cover_image_upload(book_params, book.cover_image_url)
 
-    case Books.update_book(book, book_params) do
+    case Books.update_book(book, book_params_with_image) do
       {:ok, book} ->
         conn
         |> put_flash(:info, "Book updated successfully.")
@@ -113,10 +117,35 @@ defmodule WebApplicationWeb.BookController do
 
   def delete(conn, %{"id" => id}) do
     book = Books.get_book!(id)
+
+    # Delete the cover image file if it exists
+    if book.cover_image_url do
+      FileUpload.delete_image(book.cover_image_url)
+    end
+
     {:ok, _book} = Books.delete_book(book)
 
     conn
     |> put_flash(:info, "Book deleted successfully.")
     |> redirect(to: ~p"/books")
+  end
+
+  defp handle_cover_image_upload(book_params, existing_image_url \\ nil) do
+    case Map.get(book_params, "cover_image") do
+      %Plug.Upload{} = upload ->
+        case FileUpload.upload_image(upload, :book_cover) do
+          {:ok, image_url} ->
+            # Delete old image if updating
+            if existing_image_url, do: FileUpload.delete_image(existing_image_url)
+            Map.put(book_params, "cover_image_url", image_url)
+
+          {:error, _reason} ->
+            book_params
+        end
+
+      _ ->
+        book_params
+    end
+    |> Map.delete("cover_image")
   end
 end

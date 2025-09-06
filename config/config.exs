@@ -31,6 +31,14 @@ config :web_application, WebApplicationWeb.Endpoint,
 # at the `config/runtime.exs`.
 config :web_application, WebApplication.Mailer, adapter: Swoosh.Adapters.Local
 
+# Configure uploads path (can be overridden by environment variable)
+config :web_application, :uploads_path, System.get_env("UPLOADS_PATH") || "priv/static/uploads"
+
+# Configure whether to serve static assets (set to false when using reverse proxy)
+config :web_application,
+       :serve_static_assets,
+       System.get_env("SERVE_STATIC_ASSETS", "true") == "true"
+
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",

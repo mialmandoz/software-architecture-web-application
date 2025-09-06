@@ -3,6 +3,7 @@ defmodule WebApplicationWeb.AuthorController do
 
   alias WebApplication.Authors
   alias WebApplication.Authors.Author
+  alias WebApplication.FileUpload
 
   def index(conn, params) do
     page = Authors.list_authors(params)
@@ -43,7 +44,9 @@ defmodule WebApplicationWeb.AuthorController do
   end
 
   def create(conn, %{"author" => author_params}) do
-    case Authors.create_author(author_params) do
+    author_params_with_image = handle_profile_image_upload(author_params)
+
+    case Authors.create_author(author_params_with_image) do
       {:ok, author} ->
         conn
         |> put_flash(:info, "Author created successfully.")
@@ -63,7 +66,10 @@ defmodule WebApplicationWeb.AuthorController do
   def update(conn, %{"id" => id, "author" => author_params}) do
     author = Authors.get_author!(id)
 
-    case Authors.update_author(author, author_params) do
+    author_params_with_image =
+      handle_profile_image_upload(author_params, author.profile_image_url)
+
+    case Authors.update_author(author, author_params_with_image) do
       {:ok, author} ->
         conn
         |> put_flash(:info, "Author updated successfully.")
@@ -76,10 +82,35 @@ defmodule WebApplicationWeb.AuthorController do
 
   def delete(conn, %{"id" => id}) do
     author = Authors.get_author!(id)
+
+    # Delete the profile image file if it exists
+    if author.profile_image_url do
+      FileUpload.delete_image(author.profile_image_url)
+    end
+
     {:ok, _author} = Authors.delete_author(author)
 
     conn
     |> put_flash(:info, "Author deleted successfully.")
     |> redirect(to: ~p"/authors")
+  end
+
+  defp handle_profile_image_upload(author_params, existing_image_url \\ nil) do
+    case Map.get(author_params, "profile_image") do
+      %Plug.Upload{} = upload ->
+        case FileUpload.upload_image(upload, :author_profile) do
+          {:ok, image_url} ->
+            # Delete old image if updating
+            if existing_image_url, do: FileUpload.delete_image(existing_image_url)
+            Map.put(author_params, "profile_image_url", image_url)
+
+          {:error, _reason} ->
+            author_params
+        end
+
+      _ ->
+        author_params
+    end
+    |> Map.delete("profile_image")
   end
 end

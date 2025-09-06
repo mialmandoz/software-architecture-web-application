@@ -8,6 +8,24 @@
   </:actions>
 </.header>
 
+<!-- Book Cover Image -->
+<div class="mb-6 flex justify-center">
+  <%= if @book.cover_image_url do %>
+    <img
+      src={@book.cover_image_url}
+      alt="Cover of {@book.name}"
+      class="w-48 h-64 object-cover rounded-lg border border-gray-300 shadow-lg"
+    />
+  <% else %>
+    <div class="w-48 h-64 bg-gray-200 rounded-lg border border-gray-300 shadow-lg flex items-center justify-center">
+      <div class="text-center">
+        <div class="text-4xl text-gray-400 mb-2">📖</div>
+        <p class="text-gray-500 text-sm">No cover image</p>
+      </div>
+    </div>
+  <% end %>
+</div>
+
 <.list>
   <:item title="Name">{@book.name}</:item>
   <:item title="Author">
