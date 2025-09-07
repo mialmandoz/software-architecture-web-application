@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  gatling:
+    image: denvazh/gatling:3.9.5
+    container_name: gatling_load_test
+    volumes:
+      - ./simulations:/opt/gatling/user-files/simulations
+      - ./results:/opt/gatling/results
+      - ./resources:/opt/gatling/user-files/resources
+    environment:
+      - JAVA_OPTS=-Xmx1g -Xms1g
+    networks:
+      - web_application_network
+    profiles:
+      - load-test
+
+  # Monitoring tools
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus_monitoring
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - web_application_network
+    profiles:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana_monitoring
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - web_application_network
+    profiles:
+      - monitoring
+
+volumes:
+  grafana_data:
+
+networks:
+  web_application_network:
+    external: true

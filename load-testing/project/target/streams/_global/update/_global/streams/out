@@ -1,0 +1,7 @@
+[0m[[0m[0mdebug[0m] [0m[0mnot up to date. inChanged = true, force = false[0m
+[0m[[0m[0mdebug[0m] [0m[0mUpdating ProjectRef(uri("file:/Users/rolandschlosser/Dropbox/Classes/Software%20Architecture/Assignments/Assignment%201/software-architecture-web-application/load-testing/project/"), "load-testing-build")...[0m
+[0m[[0m[0minfo[0m] [0m[0mUpdating load-testing-build[0m
+[0m[[0m[0minfo[0m] [0m[0mResolved load-testing-build dependencies[0m
+[0m[[0m[0minfo[0m] [0m[0mFetching artifacts of load-testing-build[0m
+[0m[[0m[0minfo[0m] [0m[0mFetched artifacts of load-testing-build[0m
+[0m[[0m[0mdebug[0m] [0m[0mDone updating ProjectRef(uri("file:/Users/rolandschlosser/Dropbox/Classes/Software%20Architecture/Assignments/Assignment%201/software-architecture-web-application/load-testing/project/"), "load-testing-build")[0m

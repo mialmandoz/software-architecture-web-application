@@ -207,7 +207,64 @@ The image upload system integrates seamlessly with all existing features includi
 
 ---
 
-## 3. Troubleshooting
+## 3. Load Testing
+
+The application includes a comprehensive Gatling-based load testing framework to evaluate performance across all deployment configurations.
+
+### Quick Start
+
+**Run all tests (comprehensive suite - ~3-4 hours):**
+
+```bash
+cd load-testing
+chmod +x run-tests.sh
+./run-tests.sh
+```
+
+**Run quick tests for specific profiles:**
+
+```bash
+cd load-testing
+chmod +x quick-test.sh
+# Run the correponding docker-compose profile first
+# e.g. docker-compose --profile normal up --build
+./quick-test.sh normal 100 5     # Test normal profile with 100 users for 5 minutes
+./quick-test.sh cache 1000 5    # Test cache profile with 1000 users for 5 minutes
+./quick-test.sh search 50 5      # Test search profile with 50 users for 5 minutes
+./quick-test.sh nginx-normal 500 5     # Test nginx profile with 500 users for 5 minutes
+./quick-test.sh all 200 5       # Test all features with 200 users for 5 minutes
+```
+
+### Test Scenarios
+
+The load tests simulate realistic user behavior with the following distribution:
+
+- **Browse Books** (40%) - Users browsing the book catalog
+- **Search Books** (25%) - Users performing book searches
+- **Browse Authors** (15%) - Users viewing author profiles
+- **Browse Reviews** (15%) - Users reading book reviews
+- **Browse Sales** (5%) - Users checking sales data
+
+### Monitoring
+
+**Basic monitoring (included by default):**
+
+- Response times and success rates
+- Container resource usage (CPU, memory, network, I/O)
+- Automated stats collection during tests
+
+### Results
+
+Test results are automatically saved to:
+
+- **HTML Reports:** `load-testing/results/[profile]/[timestamp]/`
+- **Container Stats:** `load-testing/stats/[profile]_[users]users_[timestamp].txt`
+
+For detailed documentation, see [`load-testing/README.md`](load-testing/README.md).
+
+---
+
+## 4. Troubleshooting
 
 ### Docker Network Errors
 
@@ -405,6 +462,15 @@ web_application/
 │   ├── web_application_web/         # Web tests
 │   │   └── controllers/             # Controller tests
 │   └── test_helper.exs              # Test configuration
+├── load-testing/                    # Performance testing framework
+│   ├── simulations/                 # Gatling test simulations
+│   │   └── WebApplicationLoadTest.scala # Main load test with realistic user scenarios
+│   ├── monitoring/                  # Monitoring configuration
+│   │   └── prometheus.yml          # Prometheus metrics collection setup
+│   ├── README.md                   # Load testing documentation and usage guide
+│   ├── docker-compose.gatling.yml  # Gatling and monitoring services configuration
+│   ├── run-tests.sh               # Automated test suite for all profiles and load levels
+│   └── quick-test.sh              # Quick testing script for individual profiles
 ├── nginx/                           # Nginx configuration
 │   └── templates/                   # Nginx template files
 │       └── default.conf.template    # Reverse proxy configuration
