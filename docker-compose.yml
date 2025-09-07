@@ -10,6 +10,8 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - web_application_network
 
   redis:
     container_name: web_application_redis
@@ -19,6 +21,8 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    networks:
+      - web_application_network
     profiles:
       - cache
       - cache-search
@@ -36,6 +40,8 @@ services:
       - "9600:9600"
     volumes:
       - opensearch_data:/usr/share/opensearch/data
+    networks:
+      - web_application_network
     profiles:
       - search
       - cache-search
@@ -58,6 +64,8 @@ services:
       - .:/app
       - /app/deps
       - /app/_build
+    networks:
+      - web_application_network
     profiles:
       - normal
       - nginx
@@ -82,6 +90,8 @@ services:
       - .:/app
       - /app/deps
       - /app/_build
+    networks:
+      - web_application_network
     profiles:
       - cache
 
@@ -105,6 +115,8 @@ services:
       - .:/app
       - /app/deps
       - /app/_build
+    networks:
+      - web_application_network
     profiles:
       - search
       - all
@@ -130,6 +142,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - web_application_network
     profiles:
       - nginx
 
@@ -156,6 +170,8 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - web_application_network
     profiles:
       - all
 
@@ -166,4 +182,4 @@ volumes:
 
 networks:
   web_application_network:
-    name: web_application_network
+    external: true

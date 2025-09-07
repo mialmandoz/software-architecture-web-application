@@ -166,3 +166,6 @@ benchmarks/
 
 # Pictures
 priv/static/uploads
+
+# Load testing results
+load-testing/results
